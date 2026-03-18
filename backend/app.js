@@ -1,8 +1,8 @@
 import express from 'express';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
-import AppError from './utils/error/appError.js';
-import globalErrorHandler from './middlewares/globalErrorHandler.js';
+import AppError from './src/utils/error/appError.js';
+import globalErrorHandler from './src/middlewares/globalErrorHandler.js';
 
 const app = express();
 
