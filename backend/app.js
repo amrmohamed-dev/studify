@@ -3,6 +3,7 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import AppError from './src/utils/error/appError.js';
 import globalErrorHandler from './src/middlewares/globalErrorHandler.js';
+import authRouter from './src/modules/auth/auth.route.js';
 
 const app = express();
 
@@ -18,7 +19,7 @@ app.use(cookieParser());
 app.use(express.json({ limit: '5kb' }));
 
 //Rooters
-
+app.use('/api/v1/auth', authRouter);
 
 app.use((req, res, next) => {
   next(
