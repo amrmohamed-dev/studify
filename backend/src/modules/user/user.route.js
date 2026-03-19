@@ -4,6 +4,7 @@ import * as authMiddleware from '../../middlewares/auth.middleware.js';
 import { updateMyPassword } from '../auth/auth.controller.js';
 import validation from '../../middlewares/validation.middleware.js';
 import { updatePasswordSchema } from './user.validation.js';
+import fileUpload from '../../middlewares/upload.middleware.js';
 
 const userRouter = express.Router();
 
@@ -21,6 +22,15 @@ userRouter.patch(
   validation(updatePasswordSchema),
   updateMyPassword,
 );
+
+userRouter
+  .route('/me/photo')
+  .patch(
+    authMiddleware.needVerify,
+    fileUpload('image'),
+    userController.addProfilePhoto,
+  )
+  .delete(authMiddleware.needVerify, userController.deleteProfilePhoto);
 
 userRouter.route('/').get(userController.getAllUsers);
 
