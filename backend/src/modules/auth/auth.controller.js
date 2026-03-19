@@ -143,6 +143,9 @@ const updateMyPassword = catchAsync(async (req, res, next) => {
   if (!(await user.correctPassword(currentPassword))) {
     return next(new AppError('Your current password is wrong!', 400));
   }
+  if (await user.correctPassword(password)) {
+    return next(new AppError('New password must be different', 400));
+  }
   user.password = password;
   await user.save({ validateModifiedOnly: true });
 
