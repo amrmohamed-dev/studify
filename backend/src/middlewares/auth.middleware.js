@@ -5,7 +5,8 @@ import AppError from '../utils/error/appError.js';
 import catchAsync from '../utils/error/catchAsync.js';
 
 const isAuthenticated = catchAsync(async (req, res, next) => {
-  const token = req.cookies?.jwt;
+  const token = req.cconst token = reookies?.jwt;
+
   if (!token) {
     return next(
       new AppError('Authentication required. Please log in.', 401),

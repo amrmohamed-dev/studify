@@ -2,8 +2,11 @@ import { Router } from 'express';
 import * as roomController from './room.controller.js';
 import validate from '../../middlewares/validate.js';
 import { createRoomSchema, updateRoomSchema } from './room.validation.js';
+import { isAuthenticated } from '../../middlewares/auth.middleware.js';
 
 const router = Router();
+
+router.use(isAuthenticated);
 
 router.post('/', validate(createRoomSchema), roomController.createRoom);
 router.get('/', roomController.getAllRooms);

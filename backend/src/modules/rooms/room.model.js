@@ -7,11 +7,7 @@ const roomSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    description: {
-      type: String,
-      trim: true,
-    },
-    owner: {
+    createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
@@ -20,9 +16,49 @@ const roomSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    photo: {
+    password: {
       type: String,
+      select: false,
     },
+    image: {
+      url: {
+        type: String,
+        default: null,
+      },
+      publicId: {
+        type: String,
+        default: null,
+      },
+    },
+    maxMembers: {
+      type: Number,
+    },
+    members: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+        },
+        role: {
+          type: String,
+          enum: ['admin', 'member'],
+        },
+        joinedAt: {
+          type: Date,
+        },
+      },
+    ],
+    pendingMembers: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+        },
+        requestedAt: {
+          type: Date,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );
