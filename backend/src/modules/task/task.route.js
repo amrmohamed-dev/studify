@@ -8,10 +8,11 @@ const taskRouter = express.Router();
 
 taskRouter.use(authMiddleware.isAuthenticated,authMiddleware.needVerify);
 
+
 taskRouter
-  .route("/tasks")
+  .route("/rooms/:roomId/tasks")
   .post(
-    validation(taskValidation), 
+    validation(taskValidation),
     taskController.createTask
   )
   .get(taskController.getRoomTasks);
@@ -20,11 +21,15 @@ taskRouter
   .route("/tasks/:id")
   .get(taskController.getTaskById)
   .patch(
-    validation(taskValidation), 
+    validation(taskValidation),
     taskController.updateTask
   )
   .delete(taskController.deleteTask);
 
 taskRouter.patch("/tasks/:id/toggle", taskController.toggleTask);
+
+taskRouter.get("/test", (req, res) => {
+  res.json({ message: "working" });
+});
 
 export default taskRouter;
