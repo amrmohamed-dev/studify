@@ -1,0 +1,67 @@
+<section class="auth-page">
+  <div class="page-card auth-card">
+    <span class="auth-eyebrow">Welcome Back</span>
+    <h1 class="auth-title">Login to Studify</h1>
+    <p class="auth-subtitle">Ready to study smarter today?</p>
+
+    <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="submit()">
+      <div class="form-row">
+        <label for="login-email">Email</label>
+        <input
+          id="login-email"
+          type="email"
+          formControlName="email"
+          placeholder="student@example.com"
+        />
+
+        @if (
+          loginForm.get("email")?.touched && loginForm.get("email")?.invalid
+        ) {
+          <p class="form-error">Please enter a valid email</p>
+        }
+      </div>
+
+      <div class="form-row">
+        <label for="login-password">Password</label>
+        <input
+          id="login-password"
+          type="password"
+          maxlength="30"
+          formControlName="password"
+          placeholder="Enter your password"
+        />
+
+        @if (
+          loginForm.get("password")?.touched &&
+          loginForm.get("password")?.errors
+        ) {
+          @if (loginForm.get("password")?.errors?.["required"]) {
+            <p class="form-error">Password is required</p>
+          }
+          @if (loginForm.get("password")?.errors?.["minlength"]) {
+            <p class="form-error">Password must be at least 8 characters</p>
+          }
+          @if (loginForm.get("password")?.errors?.["maxlength"]) {
+            <p class="form-error">Password must not exceed 30 characters</p>
+          }
+        }
+      </div>
+
+      @if (error) {
+        <p class="form-error">{{ error }}</p>
+      }
+
+      <div class="auth-actions">
+        <button class="btn-primary" type="submit" [disabled]="loading">
+          {{ loading ? "Logging in..." : "Login" }}
+        </button>
+      </div>
+    </form>
+
+    <div class="auth-links">
+      <span>New here?</span>
+      <a routerLink="/register">Create account</a>
+      <a routerLink="/reset-password">Forgot password?</a>
+    </div>
+  </div>
+</section>
