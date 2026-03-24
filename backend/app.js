@@ -6,6 +6,8 @@ import globalErrorHandler from './src/middlewares/globalErrorHandler.js';
 import authRouter from './src/modules/auth/auth.route.js';
 import userRouter from './src/modules/user/user.route.js';
 import taskRouter from './src/modules/task/task.route.js';
+import messageRouter from './src/modules/message/message.route.js';
+
 
 const app = express();
 
@@ -23,6 +25,7 @@ app.use(express.json({ limit: '5kb' }));
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1', taskRouter);
+app.use('/api/v1', messageRouter);
 
 app.use((req, res, next) => {
   next(
