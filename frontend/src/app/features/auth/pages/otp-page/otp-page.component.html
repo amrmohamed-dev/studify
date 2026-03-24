@@ -1,0 +1,66 @@
+<section class="auth-page">
+  <div class="page-card auth-card">
+    <span class="auth-eyebrow">OTP Verification</span>
+    <h1 class="auth-title">Enter your 6-digit code</h1>
+    <p class="auth-subtitle">
+      Use the code sent to your email to continue your
+      {{
+        purpose === "password-recovery"
+          ? "password reset"
+          : "email verification"
+      }}.
+    </p>
+
+    <form class="auth-form" [formGroup]="otpForm" (ngSubmit)="submit()">
+      <div class="form-row">
+        <label for="otp-code">OTP</label>
+        <input
+          id="otp-code"
+          type="text"
+          inputmode="numeric"
+          maxlength="6"
+          formControlName="otp"
+          placeholder="123456"
+        />
+
+        @if (otpForm.get("otp")?.touched && otpForm.get("otp")?.errors) {
+          @if (otpForm.get("otp")?.errors?.["required"]) {
+            <p class="form-error">OTP is required</p>
+          }
+          @if (
+            otpForm.get("otp")?.errors?.["minlength"] ||
+            otpForm.get("otp")?.errors?.["maxlength"]
+          ) {
+            <p class="form-error">OTP must be 6 digits</p>
+          }
+          @if (otpForm.get("otp")?.errors?.["pattern"]) {
+            <p class="form-error">OTP must contain numbers only</p>
+          }
+        }
+      </div>
+
+      @if (error) {
+        <p class="form-error">{{ error }}</p>
+      }
+
+      @if (success) {
+        <p class="form-hint">{{ success }}</p>
+      }
+
+      <div class="auth-actions">
+        <button
+          class="btn-primary"
+          type="submit"
+          [disabled]="loading || otpForm.invalid"
+        >
+          {{ loading ? "Verifying..." : "Verify" }}
+        </button>
+      </div>
+    </form>
+
+    <div class="auth-links">
+      <a routerLink="/login">Back to login</a>
+      <a routerLink="/register">Create another account</a>
+    </div>
+  </div>
+</section>
