@@ -1,4 +1,4 @@
-import * as roomService from "./room.service.js";
+import * as roomService from "./roomMembers.service.js";
 import catchAsync from "../../utils/catchAsync.js";
 
 export const joinRoom = catchAsync(async (req, res) => {

@@ -1,5 +1,5 @@
 import express from "express";
-import * as roomController from "./room.controller.js";
+import * as roomController from "./roomMembers.controller.js";
 import { protect } from "../../middlewares/auth.middleware.js";
 import { validate } from "../../middlewares/validate.middleware.js";
 
@@ -9,7 +9,7 @@ import {
   removeMemberSchema,
   getMembersSchema,
   getPendingSchema
-} from "./room.validation.js";
+} from "./roomMembers.validation.js";
 
 const router = express.Router();
 
