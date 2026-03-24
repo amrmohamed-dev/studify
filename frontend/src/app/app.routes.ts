@@ -105,7 +105,7 @@ export const routes: Routes = [
 
   {
     path: 'otp',
-    canActivate: [otpGuard, guestGuard],
+    canActivate: [otpGuard],
     loadComponent: () =>
       import('./features/auth/pages/otp-page/otp-page.component').then(
         (m) => m.OtpPageComponent,
