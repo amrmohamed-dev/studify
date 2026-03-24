@@ -91,9 +91,7 @@ export class AuthService {
     password: string;
     passwordConfirm: string;
   }) {
-    return this.http
-      .post<any>(`${this.api}/auth/register`, data)
-      .pipe(tap((res) => this.userSubject.next(res.data.user)));
+    return this.http.post<any>(`${this.api}/auth/register`, data);
   }
 
   sendOtp(purpose: 'Email Confirmation' | 'Password Recovery', email?: string) {
