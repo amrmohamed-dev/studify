@@ -1,0 +1,127 @@
+<nav class="navbar">
+  <div class="nav-left">
+    <a class="logo" routerLink="/home">
+      <img src="assets/logo.png" alt="Studify" />
+    </a>
+
+    <div class="nav-links">
+      <a routerLink="/home" routerLinkActive="active">
+        <lucide-icon [img]="icons.home"></lucide-icon>
+        <span>Home</span>
+      </a>
+      <a routerLink="/rooms" routerLinkActive="active">
+        <lucide-icon [img]="icons.rooms"></lucide-icon>
+        <span>Rooms</span>
+      </a>
+      <a routerLink="/friends" routerLinkActive="active">
+        <lucide-icon [img]="icons.friends"></lucide-icon>
+        <span>Friends</span>
+      </a>
+    </div>
+
+    <button class="menu-btn" type="button" (click)="toggleMenu()">☰</button>
+  </div>
+
+  <div class="nav-right" (click)="stopDropdownClose($event)">
+    @if (auth.loading$ | async) {
+      <div class="auth-loading"></div>
+    } @else {
+      @if (user$ | async; as user) {
+        <div class="notif-wrapper">
+          <button class="icon-btn" (click)="toggleNotif()">🔔</button>
+
+          @if (showNotif) {
+            <div class="dropdown-panel notif-dropdown">
+              <p class="dropdown-title">Notifications</p>
+
+              @for (n of notifications; track n._id) {
+                <div class="notif-item">{{ n.message }}</div>
+              }
+
+              <a routerLink="/notifications" class="view-all">View All</a>
+            </div>
+          }
+        </div>
+
+        <div class="user-wrapper">
+          <button class="avatar-btn" (click)="toggleUser()">
+            <span class="avatar-text">{{ getInitials(user.name) }}</span>
+          </button>
+
+          @if (showUserMenu) {
+            <div class="dropdown-panel user-dropdown">
+              <a routerLink="/settings" routerLinkActive="active">
+                <lucide-icon [img]="icons.settings"></lucide-icon>
+                <span>Settings</span>
+              </a>
+              <button (click)="logout()">
+                <lucide-icon [img]="icons.logout"></lucide-icon>
+                Logout
+              </button>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="auth-buttons">
+          <a routerLink="/login" class="btn-link">Login</a>
+          <a routerLink="/register" class="btn-primary">Create Account</a>
+        </div>
+      }
+    }
+  </div>
+</nav>
+
+@if (isMenuOpen) {
+  <div class="overlay" (click)="closeMenu()"></div>
+}
+
+<div class="sidebar" [class.open]="isMenuOpen">
+  <a routerLink="/home" routerLinkActive="active" (click)="closeMenu()">
+    <lucide-icon [img]="icons.home"></lucide-icon>
+    <span>Home</span>
+  </a>
+  <a routerLink="/rooms" routerLinkActive="active" (click)="closeMenu()">
+    <lucide-icon [img]="icons.rooms"></lucide-icon>
+    <span>Rooms</span>
+  </a>
+  <a routerLink="/friends" routerLinkActive="active" (click)="closeMenu()">
+    <lucide-icon [img]="icons.friends"></lucide-icon>
+    <span>Friends</span>
+  </a>
+
+  <div class="sidebar-bottom">
+    @if (auth.loading$ | async) {
+      <div class="auth-loading"></div>
+    } @else {
+      @if (user$ | async; as user) {
+        <a
+          routerLink="/settings"
+          routerLinkActive="active"
+          (click)="closeMenu()"
+        >
+          <lucide-icon [img]="icons.settings"></lucide-icon>
+          <span>Settings</span>
+        </a>
+
+        <span class="menu-divider"></span>
+
+        <button (click)="logout()">
+          <lucide-icon [img]="icons.logout"></lucide-icon>
+          Logout
+        </button>
+      } @else {
+        <span class="menu-divider"></span>
+
+        <a routerLink="/login" routerLinkActive="active" (click)="closeMenu()"
+          >Login</a
+        >
+        <a
+          routerLink="/register"
+          routerLinkActive="active"
+          (click)="closeMenu()"
+          >Create Account</a
+        >
+      }
+    }
+  </div>
+</div>

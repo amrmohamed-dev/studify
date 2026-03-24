@@ -1,0 +1,111 @@
+<section class="auth-page">
+  <div class="page-card auth-card">
+    <span class="auth-eyebrow">Join Studify</span>
+    <h1 class="auth-title">Build your study space in seconds</h1>
+    <p class="auth-subtitle">
+      Create your account and start organizing your study sessions, rooms, and
+      tasks in one place.
+    </p>
+
+    <form class="auth-form" [formGroup]="registerForm" (ngSubmit)="submit()">
+      <div class="form-row">
+        <label for="register-name">Name</label>
+        <input
+          id="register-name"
+          type="text"
+          formControlName="name"
+          placeholder="Your full name"
+        />
+
+        @if (
+          registerForm.get("name")?.touched && registerForm.get("name")?.invalid
+        ) {
+          <p class="form-error">Name must be at least 3 characters</p>
+        }
+      </div>
+
+      <div class="form-row">
+        <label for="register-email">Email</label>
+        <input
+          id="register-email"
+          type="email"
+          formControlName="email"
+          placeholder="student@example.com"
+        />
+
+        @if (
+          registerForm.get("email")?.touched &&
+          registerForm.get("email")?.invalid
+        ) {
+          <p class="form-error">Please enter a valid email</p>
+        }
+      </div>
+
+      <div class="form-row">
+        <label for="register-password">Password</label>
+        <input
+          id="register-password"
+          type="password"
+          formControlName="password"
+          maxlength="30"
+          placeholder="At least 8 characters"
+        />
+
+        @if (
+          registerForm.get("password")?.touched &&
+          registerForm.get("password")?.errors
+        ) {
+          @if (registerForm.get("password")?.errors?.["required"]) {
+            <p class="form-error">Password is required</p>
+          }
+          @if (registerForm.get("password")?.errors?.["minlength"]) {
+            <p class="form-error">Password must be at least 8 characters</p>
+          }
+          @if (registerForm.get("password")?.errors?.["maxlength"]) {
+            <p class="form-error">Password must not exceed 30 characters</p>
+          }
+        }
+      </div>
+
+      <div class="form-row">
+        <label for="register-confirm-password">Confirm Password</label>
+        <input
+          id="register-confirm-password"
+          type="password"
+          formControlName="confirmPassword"
+          placeholder="Repeat your password"
+        />
+
+        @if (
+          registerForm.get("confirmPassword")?.touched &&
+          registerForm.get("confirmPassword")?.invalid
+        ) {
+          <p class="form-error">Confirm password is required</p>
+        }
+      </div>
+
+      @if (
+        registerForm.value.password &&
+        registerForm.value.confirmPassword &&
+        registerForm.value.password !== registerForm.value.confirmPassword
+      ) {
+        <p class="form-error">Passwords do not match</p>
+      }
+
+      @if (error) {
+        <p class="form-error">{{ error }}</p>
+      }
+
+      <div class="auth-actions">
+        <button class="btn-primary" type="submit" [disabled]="loading">
+          {{ loading ? "Creating account..." : "Register" }}
+        </button>
+      </div>
+    </form>
+
+    <div class="auth-links">
+      <span>Already have an account?</span>
+      <a routerLink="/login">Login</a>
+    </div>
+  </div>
+</section>

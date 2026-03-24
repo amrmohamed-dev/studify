@@ -1,3 +1,5 @@
+import path from 'path';
+import { existsSync } from 'fs';
 import express from 'express';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
@@ -26,6 +28,23 @@ app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1', taskRouter);
 app.use('/api/v1', messageRouter);
+
+const angularDistPath = path.join(
+  process.cwd(),
+  '..',
+  'frontend',
+  'dist',
+  'frontend',
+  'browser',
+);
+const angularIndexPath = path.join(angularDistPath, 'index.html');
+if (existsSync(angularIndexPath)) {
+  app.use(express.static(angularDistPath));
+
+  app.get(/^(?!\/api).*/, (req, res) => {
+    res.sendFile(angularIndexPath);
+  });
+}
 
 app.use((req, res, next) => {
   next(
