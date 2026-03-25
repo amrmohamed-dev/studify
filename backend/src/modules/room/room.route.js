@@ -4,10 +4,13 @@ import * as authMiddleware from '../../middlewares/auth.middleware.js';
 import validation from '../../middlewares/validation.middleware.js';
 import { createRoomSchema, updateRoomSchema } from './room.validation.js';
 import fileUpload from '../../middlewares/upload.middleware.js';
+import roomMembersRouter from '../roomMembers/roomMembers.routes.js';
 
 const roomRouter = express.Router();
 
 roomRouter.use(authMiddleware.isAuthenticated, authMiddleware.needVerify);
+
+roomRouter.use('/:id', roomMembersRouter);
 
 roomRouter
   .route('/')
