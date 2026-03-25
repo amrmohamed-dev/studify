@@ -1,18 +1,33 @@
 import Joi from 'joi';
 
-export const createRoomSchema = Joi.object({
-  name: Joi.string().trim().required().messages({
-    'string.empty': 'Room name is required',
-    'any.required': 'Room name is required',
+const createRoomSchema = Joi.object({
+  name: Joi.string().min(3).max(50).required(),
+
+  privacyType: Joi.string()
+    .valid('public', 'private_request', 'private_password')
+    .default('public'),
+
+  password: Joi.when('privacyType', {
+    is: 'private_password',
+    then: Joi.string().min(6).required(),
+    otherwise: Joi.forbidden(),
   }),
-  description: Joi.string().trim().optional(),
-  isPrivate: Joi.boolean().default(false),
-  photo: Joi.string().optional(),
+
+  maxMembers: Joi.number().min(1).max(11),
 });
 
-export const updateRoomSchema = Joi.object({
-  name: Joi.string().trim().optional(),
-  description: Joi.string().trim().optional(),
-  isPrivate: Joi.boolean().optional(),
-  photo: Joi.string().optional(),
+const updateRoomSchema = Joi.object({
+  name: Joi.string().min(3).max(50),
+
+  privacyType: Joi.string().valid(
+    'public',
+    'private_request',
+    'private_password',
+  ),
+
+  password: Joi.string().min(6),
+
+  maxMembers: Joi.number().min(1).max(11),
 });
+
+export { createRoomSchema, updateRoomSchema };
