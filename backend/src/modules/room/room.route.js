@@ -3,20 +3,29 @@ import * as roomController from './room.controller.js';
 import * as authMiddleware from '../../middlewares/auth.middleware.js';
 import validation from '../../middlewares/validation.middleware.js';
 import { createRoomSchema, updateRoomSchema } from './room.validation.js';
+import fileUpload from '../../middlewares/upload.middleware.js';
 
 const roomRouter = express.Router();
 
-roomRouter.use(authMiddleware.isAuthenticated);
+roomRouter.use(authMiddleware.isAuthenticated, authMiddleware.needVerify);
 
 roomRouter
   .route('/')
-  .post(validation(createRoomSchema), roomController.createRoom)
+  .post(
+    fileUpload('image'),
+    validation(createRoomSchema),
+    roomController.createRoom,
+  )
   .get(roomController.getAllRooms);
 
 roomRouter
   .route('/:id')
-  .get(roomController.getRoom)
-  .patch(validation(updateRoomSchema), roomController.updateRoom)
+  .get(roomController.getOneRoom)
+  .patch(
+    fileUpload('image'),
+    validation(updateRoomSchema),
+    roomController.updateRoom,
+  )
   .delete(roomController.deleteRoom);
 
 export default roomRouter;
