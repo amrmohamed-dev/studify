@@ -42,8 +42,8 @@ const roomSchema = new mongoose.Schema(
     maxMembers: {
       type: Number,
       min: [1, 'Room must have at least 1 members'],
-      max: [11, 'Room cannot exceed 100 members'],
-      default: 6,
+      max: [10, 'Room cannot exceed 10 members'],
+      default: 5,
     },
     members: [
       {
@@ -51,14 +51,6 @@ const roomSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.ObjectId,
           ref: 'User',
           required: true,
-        },
-        role: {
-          type: String,
-          enum: {
-            values: ['admin', 'member'],
-            message: 'Role must be either admin or member',
-          },
-          default: 'member',
         },
         joinedAt: {
           type: Date,

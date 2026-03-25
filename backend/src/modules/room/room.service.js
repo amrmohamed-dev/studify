@@ -21,7 +21,6 @@ const createRoom = async ({ userId, data, file }) => {
     ...data,
     image: imageData,
     createdBy: userId,
-    members: [{ user: userId, role: 'admin' }],
   });
 
   return room;
