@@ -13,8 +13,8 @@ export const routes: Routes = [
   {
     path: 'home',
     loadComponent: () =>
-      import('./features/pages/simple-page/simple-page.component').then(
-        (m) => m.SimplePageComponent,
+      import('./features/pages/home/home.component').then(
+        (m) => m.HomeComponent,
       ),
     data: {
       title: 'Study Better Together',
@@ -40,6 +40,35 @@ export const routes: Routes = [
       actionLink: '/home',
     },
   },
+  {
+  path: 'rooms',
+  canActivate: [authGuard],
+  loadComponent: () =>
+    import('./features/pages/simple-page/simple-page.component').then(
+      (m) => m.SimplePageComponent,
+    ),
+  data: {
+    title: 'Rooms',
+    description:
+      'Browse study rooms, join active discussions, and keep shared tasks organized in one place.',
+    actionLabel: 'Back Home',
+    actionLink: '/home',
+  },
+},
+{
+  path: 'rooms/join',
+  canActivate: [authGuard],
+  loadComponent: () =>
+    import('./features/pages/simple-page/simple-page.component').then(
+      (m) => m.SimplePageComponent,
+    ),
+  data: {
+    title: 'Join a Room',
+    description: 'Find and join a study room to collaborate with others.',
+    actionLabel: 'Back to Rooms',
+    actionLink: '/rooms',
+  },
+},
   {
     path: 'friends',
     canActivate: [authGuard],
