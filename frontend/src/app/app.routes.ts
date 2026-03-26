@@ -9,7 +9,6 @@ export const routes: Routes = [
     pathMatch: 'full',
     redirectTo: 'home',
   },
-
   {
     path: 'home',
     loadComponent: () =>
@@ -24,7 +23,6 @@ export const routes: Routes = [
       actionLink: '/rooms',
     },
   },
-
   {
     path: 'rooms',
     canActivate: [authGuard],
@@ -41,34 +39,33 @@ export const routes: Routes = [
     },
   },
   {
-  path: 'rooms',
-  canActivate: [authGuard],
-  loadComponent: () =>
-    import('./features/pages/simple-page/simple-page.component').then(
-      (m) => m.SimplePageComponent,
-    ),
-  data: {
-    title: 'Rooms',
-    description:
-      'Browse study rooms, join active discussions, and keep shared tasks organized in one place.',
-    actionLabel: 'Back Home',
-    actionLink: '/home',
+    path: 'rooms/join',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/pages/simple-page/simple-page.component').then(
+        (m) => m.SimplePageComponent,
+      ),
+    data: {
+      title: 'Join a Room',
+      description: 'Find and join a study room to collaborate with others.',
+      actionLabel: 'Back to Rooms',
+      actionLink: '/rooms',
+    },
   },
-},
-{
-  path: 'rooms/join',
-  canActivate: [authGuard],
-  loadComponent: () =>
-    import('./features/pages/simple-page/simple-page.component').then(
-      (m) => m.SimplePageComponent,
-    ),
-  data: {
-    title: 'Join a Room',
-    description: 'Find and join a study room to collaborate with others.',
-    actionLabel: 'Back to Rooms',
-    actionLink: '/rooms',
+  {
+    path: 'rooms/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/pages/simple-page/simple-page.component').then(
+        (m) => m.SimplePageComponent,
+      ),
+    data: {
+      title: 'Room',
+      description: 'Your study room.',
+      actionLabel: 'Back to Rooms',
+      actionLink: '/rooms',
+    },
   },
-},
   {
     path: 'friends',
     canActivate: [authGuard],
@@ -114,7 +111,6 @@ export const routes: Routes = [
       actionLink: '/friends',
     },
   },
-
   {
     path: 'login',
     canActivate: [guestGuard],
@@ -131,7 +127,6 @@ export const routes: Routes = [
         (m) => m.RegisterPageComponent,
       ),
   },
-
   {
     path: 'otp',
     canActivate: [otpGuard],
@@ -140,7 +135,6 @@ export const routes: Routes = [
         (m) => m.OtpPageComponent,
       ),
   },
-
   {
     path: 'reset-password',
     canActivate: [guestGuard],
@@ -149,7 +143,6 @@ export const routes: Routes = [
         (m) => m.ResetPasswordPageComponent,
       ),
   },
-
   {
     path: '**',
     redirectTo: 'home',
