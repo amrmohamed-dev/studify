@@ -1,0 +1,95 @@
+<div class="home-wrapper">
+  <div class="home-wrapper">
+
+  <!-- Stat Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon tasks-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none"
+          viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2
+               M9 5a2 2 0 002 2h2a2 2 0 002-2
+               M9 5a2 2 0 012-2h2a2 2 0 012 2
+               m-6 9l2 2 4-4"/>
+        </svg>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">Total Tasks</span>
+        <span class="stat-value">{{ taskStats?.totalTasks ?? '—' }}</span>
+      </div>
+      <div class="stat-sub">
+        <span>✅ {{ taskStats?.completedTasks ?? 0 }} completed</span>
+        <span>⏳ {{ taskStats?.pendingTasks ?? 0 }} pending</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon hours-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none"
+          viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/>
+        </svg>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">Study Hours</span>
+        <span class="stat-value">{{ sessionStats?.totalHours ?? '—' }}h</span>
+      </div>
+      <div class="stat-sub">
+        <span>📅 This week: {{ sessionStats?.weeklyHours ?? 0 }}h</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Title Section -->
+  <div class="hero-section">
+    <h1 class="hero-title">Welcome Back 👋</h1>
+    <p class="hero-subtitle">Jump back into your rooms and keep the momentum going.</p>
+  </div>
+
+  <!-- My Rooms Section -->
+  <div class="rooms-section">
+    <div class="rooms-header">
+      <h2 class="section-title">My Rooms</h2>
+      <div class="rooms-actions">
+        <button class="btn-join" (click)="goToJoinRoom()">Join a Room</button>
+        <button class="btn-view-all" (click)="goToRooms()">View All</button>
+      </div>
+    </div>
+
+    <div class="rooms-grid" *ngIf="!loading; else loadingTpl">
+
+      <ng-container *ngIf="rooms.length > 0; else noRoomsTpl">
+        <div class="room-card" *ngFor="let room of rooms">
+          <div class="room-image-wrapper">
+           <img [src]="room.image?.url ? room.image.url : 'https://placehold.co/400x200?text=Room'"
+     [alt]="room.name" class="room-image" />
+          </div>
+          <div class="room-info">
+            <h3 class="room-name">{{ room.name }}</h3>
+            <button class="btn-enter" (click)="enterRoom(room._id)">Enter Room</button>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-template #noRoomsTpl>
+        <div class="no-rooms">
+          <p>You haven't joined any rooms yet.</p>
+          <button class="btn-join" (click)="goToJoinRoom()">Join a Room</button>
+        </div>
+      </ng-template>
+
+    </div>
+
+    <ng-template #loadingTpl>
+      <div class="loading-grid">
+        <div class="skeleton-card" *ngFor="let i of [1,2,3,4,5,6]"></div>
+      </div>
+    </ng-template>
+  </div>
+
+</div>
+
+</div>
+

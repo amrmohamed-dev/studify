@@ -4,14 +4,16 @@ class APIFeatures {
     this.query = query;
   }
 
-  search() {
+  search(fields) {
     if (this.query.search) {
       const keyword = this.query.search;
+      const searchFields = fields ||
+        this.query.searchFields?.split(',') || ['name', 'email'];
+
       this.mongooseQuery.find({
-        $or: [
-          { name: { $regex: keyword, $options: 'i' } },
-          { email: { $regex: keyword, $options: 'i' } },
-        ],
+        $or: searchFields.map((field) => ({
+          [field]: { $regex: keyword, $options: 'i' },
+        })),
       });
     }
     return this;
@@ -19,7 +21,14 @@ class APIFeatures {
 
   filter() {
     const queryObj = { ...this.query };
-    const excludedFileds = ['page', 'limit', 'fields', 'sort', 'search'];
+    const excludedFileds = [
+      'page',
+      'limit',
+      'fields',
+      'sort',
+      'search',
+      'searchFields',
+    ];
     excludedFileds.forEach((f) => delete queryObj[f]);
     let queryStr = JSON.stringify(queryObj);
     queryStr = queryStr.replace(
