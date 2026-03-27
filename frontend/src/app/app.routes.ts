@@ -67,6 +67,14 @@ export const routes: Routes = [
     },
   },
   {
+    path: 'rooms/:roomId/settings',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/room-settings/room-settings/room-settings.component').then(
+        (m) => m.RoomSettingsComponent
+      ),
+  },
+  {
     path: 'friends',
     canActivate: [authGuard],
     loadComponent: () =>

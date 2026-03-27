@@ -1,0 +1,240 @@
+<div class="settings-wrapper">
+
+  <!-- Header -->
+  <div class="settings-header">
+    <button class="btn-back" (click)="goBack()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none"
+        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+      </svg>
+      Back to Room
+    </button>
+    <h1 class="settings-title">Room Settings</h1>
+  </div>
+
+  <!-- Skeleton Loader -->
+  <div class="settings-card" *ngIf="isFetching">
+    <div class="skeleton skeleton-image"></div>
+    <div class="skeleton skeleton-input"></div>
+    <div class="skeleton skeleton-input"></div>
+    <div class="skeleton skeleton-privacy"></div>
+  </div>
+
+  <!-- Main Card -->
+  <div class="settings-card" *ngIf="!isFetching">
+
+    <!-- Image Upload -->
+    <div class="form-group">
+      <label class="form-label">Room Image</label>
+      <div class="image-upload-area" (click)="imageInput.click()">
+        <img *ngIf="previewImage" [src]="previewImage" class="preview-image" alt="Room preview" />
+        <div *ngIf="!previewImage" class="upload-placeholder">
+          <div class="upload-icon-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+            </svg>
+          </div>
+          <span class="upload-label">Click to upload image</span>
+          <span class="upload-hint">PNG, JPG, WEBP — max 7MB</span>
+        </div>
+        <!-- Remove button -->
+        <button *ngIf="previewImage" class="btn-remove-image"
+          (click)="$event.stopPropagation(); removeImage()" title="Remove image">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <input #imageInput type="file" accept="image/*" hidden (change)="onImageSelected($event)" />
+    </div>
+
+    <!-- Room Name -->
+    <div class="form-group">
+      <label class="form-label" for="room-name">Room Name</label>
+      <input
+        id="room-name"
+        type="text"
+        class="form-input"
+        placeholder="e.g. CS Study Group"
+        [(ngModel)]="settings.name"
+        maxlength="50"
+      />
+      <span class="char-count">{{ settings.name.length }}/50</span>
+    </div>
+
+    <!-- Max Members -->
+    <div class="form-group">
+      <label class="form-label" for="max-members">Max Members</label>
+      <div class="number-input-wrap">
+        <button class="number-btn" type="button"
+          (click)="settings.maxMembers = settings.maxMembers > 1 ? settings.maxMembers - 1 : 1">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/>
+          </svg>
+        </button>
+        <input
+          id="max-members"
+          type="number"
+          class="form-input number-input"
+          [(ngModel)]="settings.maxMembers"
+          min="1"
+          max="10"
+        />
+        <button class="number-btn" type="button"
+          (click)="settings.maxMembers = settings.maxMembers < 10 ? settings.maxMembers + 1 : 10">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+          </svg>
+        </button>
+      </div>
+      <span class="field-hint">Between 1 and 10 members</span>
+    </div>
+
+    <!-- Privacy Type -->
+    <div class="form-group">
+      <label class="form-label">Privacy Type</label>
+      <div class="privacy-options">
+
+        <!-- Public -->
+        <label class="privacy-option" [class.active]="settings.privacyType === 'public'"
+          (click)="onPrivacyChange('public')">
+          <input type="radio" name="privacy" value="public"
+            [(ngModel)]="settings.privacyType" hidden />
+          <span class="privacy-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582"/>
+            </svg>
+          </span>
+          <span class="privacy-info">
+            <span class="privacy-name">Public</span>
+            <span class="privacy-desc">Anyone can join</span>
+          </span>
+          <span class="privacy-check" *ngIf="settings.privacyType === 'public'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+          </span>
+        </label>
+
+        <!-- Private Request -->
+        <label class="privacy-option" [class.active]="settings.privacyType === 'private_request'"
+          (click)="onPrivacyChange('private_request')">
+          <input type="radio" name="privacy" value="private_request"
+            [(ngModel)]="settings.privacyType" hidden />
+          <span class="privacy-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M15 19l-7-7 7-7M9 12h12M3 12v.01"/>
+            </svg>
+          </span>
+          <span class="privacy-info">
+            <span class="privacy-name">Request</span>
+            <span class="privacy-desc">Approve members</span>
+          </span>
+          <span class="privacy-check" *ngIf="settings.privacyType === 'private_request'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+          </span>
+        </label>
+
+        <!-- Private Password -->
+        <label class="privacy-option" [class.active]="settings.privacyType === 'private_password'"
+          (click)="onPrivacyChange('private_password')">
+          <input type="radio" name="privacy" value="private_password"
+            [(ngModel)]="settings.privacyType" hidden />
+          <span class="privacy-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+            </svg>
+          </span>
+          <span class="privacy-info">
+            <span class="privacy-name">Password</span>
+            <span class="privacy-desc">Require a code</span>
+          </span>
+          <span class="privacy-check" *ngIf="settings.privacyType === 'private_password'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+          </span>
+        </label>
+
+      </div>
+    </div>
+
+    <!-- Password Field (conditional) -->
+    <div class="form-group password-field" *ngIf="settings.privacyType === 'private_password'">
+      <label class="form-label" for="room-password">Room Password</label>
+      <div class="password-input-wrap">
+        <input
+          id="room-password"
+          [type]="showPassword ? 'text' : 'password'"
+          class="form-input"
+          placeholder="Min. 6 characters"
+          [(ngModel)]="settings.password"
+          minlength="6"
+        />
+        <button type="button" class="btn-toggle-pw" (click)="togglePassword()">
+          <svg *ngIf="!showPassword" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          <svg *ngIf="showPassword" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Feedback Messages -->
+    <div class="feedback-msg success-msg" *ngIf="successMessage">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"
+        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+      </svg>
+      {{ successMessage }}
+    </div>
+    <div class="feedback-msg error-msg" *ngIf="errorMessage">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"
+        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+      </svg>
+      {{ errorMessage }}
+    </div>
+
+    <!-- Save Button -->
+    <button class="btn-save" (click)="onSubmit()" [disabled]="isLoading">
+      <span class="btn-content" *ngIf="!isLoading">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none"
+          viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Save Changes
+      </span>
+      <span class="btn-content" *ngIf="isLoading">
+        <span class="spinner"></span>
+        Saving...
+      </span>
+    </button>
+
+  </div>
+</div>
