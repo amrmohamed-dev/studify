@@ -1,5 +1,6 @@
 import SOCKET_EVENTS from '../constants.js';
 import Room from '../../modules/room/room.model.js';
+import { messageModel } from '../../modules/message/message.model.js';
 
 const registerRoomHandlers = (socket) => {
   const userId = socket.data.user._id;
@@ -29,6 +30,28 @@ const registerRoomHandlers = (socket) => {
       socket.join(`room:${roomId}`);
     } catch (error) {
       socket.emit(SOCKET_EVENTS.ERROR, { message: 'Failed to join room' });
+    }
+  });
+
+  socket.on(SOCKET_EVENTS.ROOM_MESSAGE, async ({ roomId, content }) => {
+    try {
+      if (!roomId || !content) return;
+
+      const message = await messageModel.create({
+        room: roomId,
+        sender: userId,
+        content,
+      });
+
+      const populatedMessage = await message.populate('sender', 'name');
+
+      socket.nsp
+        .to(`room:${roomId}`)
+        .emit(SOCKET_EVENTS.ROOM_MESSAGE, populatedMessage);
+    } catch (err) {
+      socket.emit(SOCKET_EVENTS.ERROR, {
+        message: 'Failed to send message',
+      });
     }
   });
 

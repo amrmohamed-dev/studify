@@ -15,6 +15,7 @@ const SOCKET_EVENTS = {
   ROOM_MEMBER_LEFT: 'room:member-left',
   ROOM_KICKED: 'room:kicked',
   ROOM_UPDATED: 'room:updated',
+  ROOM_MESSAGE: 'room:message',
 };
 
 export default SOCKET_EVENTS;
