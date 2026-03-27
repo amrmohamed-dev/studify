@@ -23,6 +23,17 @@ userRouter.patch(
   updateMyPassword,
 );
 
+userRouter.get(
+  '/me/favourites',
+  authMiddleware.needVerify,
+  userController.getMyFavourites,
+);
+userRouter.patch(
+  '/me/favourites/:roomId',
+  authMiddleware.needVerify,
+  userController.toggleFavourite,
+);
+
 userRouter
   .route('/me/photo')
   .patch(
