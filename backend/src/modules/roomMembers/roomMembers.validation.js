@@ -1,35 +1,36 @@
-import Joi from "joi";
+import Joi from 'joi';
 
 const objectId = Joi.string().hex().length(24);
 
-export const joinRoomSchema = Joi.object({
-  params: Joi.object({
-    id: objectId.required()
-  })
+const roomIdSchema = {
+  id: objectId.required(),
+};
+
+const roomUserSchema = {
+  ...roomIdSchema,
+  userId: objectId.required(),
+};
+
+const joinRoomSchema = Joi.object({
+  ...roomIdSchema,
+  password: Joi.string().min(6).allow(null, ''),
 });
 
-export const approveMemberSchema = Joi.object({
-  params: Joi.object({
-    id: objectId.required(),
-    userId: objectId.required()
-  })
-});
+const approveMemberSchema = Joi.object(roomUserSchema);
 
-export const removeMemberSchema = Joi.object({
-  params: Joi.object({
-    id: objectId.required(),
-    userId: objectId.required()
-  })
-});
+const rejectMemberSchema = Joi.object(roomUserSchema);
 
-export const getMembersSchema = Joi.object({
-  params: Joi.object({
-    id: objectId.required()
-  })
-});
+const removeMemberSchema = Joi.object(roomUserSchema);
 
-export const getPendingSchema = Joi.object({
-  params: Joi.object({
-    id: objectId.required()
-  })
-});
+const getMembersSchema = Joi.object(roomIdSchema);
+
+const getPendingSchema = Joi.object(roomIdSchema);
+
+export {
+  joinRoomSchema,
+  approveMemberSchema,
+  rejectMemberSchema,
+  removeMemberSchema,
+  getMembersSchema,
+  getPendingSchema,
+};

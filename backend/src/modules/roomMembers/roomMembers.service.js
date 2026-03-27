@@ -1,125 +1,361 @@
-import Room from "./room.model.js";
+import Room from '../room/room.model.js';
+import User from '../user/user.model.js';
+import AppError from '../../utils/error/appError.js';
+import validateObjectId from '../../utils/validateObjectId.js';
+import createNotification from '../../utils/notification.util.js';
+import { emitToUser, emitToRoom } from '../../sockets/utils/emit.js';
+import SOCKET_EVENTS from '../../sockets/constants.js';
 
-export const joinRoom = async (userId, roomId) => {
-  const room = await Room.findById(roomId);
+const getUserId = (value) =>
+  value?._id?.toString?.() || value?.toString?.() || null;
 
-  if (!room) throw new Error("Room not found");
+const findRoomById = async (roomId, query = Room.findById(roomId)) => {
+  validateObjectId(roomId, 'room id');
 
+  const room = await query;
 
-  const isMember = room.members.find(
-    m => m.user.toString() === userId.toString()
-  );
-
-  if (isMember) throw new Error("Already a member");
-
-  const isPending = room.pendingMembers.find(
-    p => p.user.toString() === userId.toString()
-  );
-
-  if (isPending) throw new Error("Already requested");
-
-
-  if (room.isPrivate) {
-    room.pendingMembers.push({ user: userId });
-    await room.save();
-
-    return { message: "Request sent" };
+  if (!room) {
+    throw new AppError('Room not found.', 404);
   }
 
+  return room;
+};
 
+const findMember = (room, userId) =>
+  room.members.find(
+    (member) => getUserId(member.user) === userId.toString(),
+  );
+
+const findPendingMember = (room, userId) =>
+  room.pendingMembers.find(
+    (pendingMember) => getUserId(pendingMember.user) === userId.toString(),
+  );
+
+const ensureAdmin = (room, userId) => {
+  if (!room.createdBy.equals(userId)) {
+    throw new AppError(
+      'You are not authorized to manage room members.',
+      403,
+    );
+  }
+};
+
+const ensureMember = (room, userId) => {
+  if (room.createdBy.equals(userId)) {
+    return null;
+  }
+
+  const member = findMember(room, userId);
+
+  if (!member) {
+    throw new AppError('You are not a member of this room.', 403);
+  }
+
+  return member;
+};
+
+const ensureRoomHasCapacity = (room) => {
   if (room.maxMembers && room.members.length >= room.maxMembers) {
-    throw new Error("Room is full");
+    throw new AppError('This room is full.', 409);
   }
+};
+
+const joinRoom = async ({ userId, roomId, password }) => {
+  validateObjectId(userId, 'user id');
+
+  const room = await findRoomById(
+    roomId,
+    Room.findById(roomId).select('+password'),
+  );
+
+  if (room.createdBy.equals(userId)) {
+    return {
+      room,
+      message: 'Room owner already has access to this room.',
+    };
+  }
+
+  if (findMember(room, userId)) {
+    throw new AppError('You are already a member of this room.', 409);
+  }
+
+  if (findPendingMember(room, userId)) {
+    throw new AppError('You already have a pending join request.', 409);
+  }
+
+  if (room.privacyType === 'private_request') {
+    room.pendingMembers.push({ user: userId });
+    await room.save({ validateModifiedOnly: true });
+
+    const user = await User.findById(userId).select('name image');
+
+    emitToUser(room.createdBy, SOCKET_EVENTS.ROOM_JOIN_REQUEST, {
+      roomId,
+      user,
+    });
+
+    return {
+      room: null,
+      message: 'Join request sent successfully.',
+    };
+  }
+
+  if (room.privacyType === 'private_password') {
+    if (!password) {
+      throw new AppError('Room password is required.', 400);
+    }
+
+    const isCorrectPassword = await room.correctPassword(password);
+
+    if (!isCorrectPassword) {
+      throw new AppError('Incorrect room password.', 401);
+    }
+  }
+
+  ensureRoomHasCapacity(room);
 
   room.members.push({
     user: userId,
-    role: "member"
   });
 
-  await room.save();
+  await room.save({ validateModifiedOnly: true });
 
-  return { message: "Joined successfully" };
+  const user = await User.findById(userId).select('name image');
+
+  emitToRoom(roomId, SOCKET_EVENTS.ROOM_MEMBER_JOINED, {
+    roomId,
+    user,
+  });
+
+  return {
+    room,
+    message: 'Joined room successfully.',
+  };
 };
 
-// -----------------------------
+const approveMember = async ({ currentUserId, roomId, userId }) => {
+  validateObjectId(currentUserId, 'current user id');
+  validateObjectId(userId, 'user id');
 
-export const approveMember = async (currentUser, roomId, userId) => {
-  const room = await Room.findById(roomId);
-
-  if (!room) throw new Error("Room not found");
-
-  const isAdmin = room.members.find(
-    m =>
-      m.user.toString() === currentUser.toString() &&
-      m.role === "admin"
+  const room = await findRoomById(
+    roomId,
+    Room.findById(roomId).populate('createdBy', 'name'),
   );
 
-  if (!isAdmin) throw new Error("Not authorized");
+  ensureAdmin(room, currentUserId);
+  ensureRoomHasCapacity(room);
 
-  const index = room.pendingMembers.findIndex(
-    p => p.user.toString() === userId
+  if (findMember(room, userId)) {
+    throw new AppError('User is already a room member.', 409);
+  }
+
+  const pendingMemberIndex = room.pendingMembers.findIndex(
+    (pendingMember) => getUserId(pendingMember.user) === userId.toString(),
   );
 
-  if (index === -1) throw new Error("User not in pending");
+  if (pendingMemberIndex === -1) {
+    throw new AppError('Pending member not found.', 404);
+  }
 
-  const user = room.pendingMembers[index];
-
-  room.pendingMembers.splice(index, 1);
+  const [pendingMember] = room.pendingMembers.splice(
+    pendingMemberIndex,
+    1,
+  );
 
   room.members.push({
-    user: user.user,
-    role: "member"
+    user: pendingMember.user,
   });
 
-  await room.save();
+  await room.save({ validateModifiedOnly: true });
 
-  return { message: "User approved" };
+  emitToUser(userId, SOCKET_EVENTS.ROOM_APPROVED, {
+    roomId,
+  });
+
+  const user = await User.findById(userId).select('name image');
+
+  emitToRoom(roomId, SOCKET_EVENTS.ROOM_MEMBER_JOINED, {
+    roomId,
+    user,
+  });
+
+  await createNotification({
+    recipient: userId,
+    sender: getUserId(room.createdBy),
+    type: 'room_approved',
+    message: `${room.createdBy.name} approved your request to join ${room.name}`,
+    link: `rooms/${roomId}`,
+    metadata: {
+      roomId: room._id,
+      roomName: room.name,
+    },
+  });
+
+  return {
+    room,
+    message: 'Member approved successfully.',
+  };
 };
 
-// -----------------------------
+const rejectMember = async ({ currentUserId, roomId, userId }) => {
+  validateObjectId(currentUserId, 'current user id');
+  validateObjectId(userId, 'user id');
 
-export const removeMember = async (currentUser, roomId, userId) => {
-  const room = await Room.findById(roomId);
-
-  if (!room) throw new Error("Room not found");
-
-  const isAdmin = room.members.find(
-    m =>
-      m.user.toString() === currentUser.toString() &&
-      m.role === "admin"
+  const room = await findRoomById(
+    roomId,
+    Room.findById(roomId).populate('createdBy', 'name'),
   );
 
-  if (!isAdmin && currentUser.toString() !== userId) {
-    throw new Error("Not authorized");
+  ensureAdmin(room, currentUserId);
+
+  const pendingMemberIndex = room.pendingMembers.findIndex(
+    (pendingMember) => getUserId(pendingMember.user) === userId.toString(),
+  );
+
+  if (pendingMemberIndex === -1) {
+    throw new AppError('Pending member not found.', 404);
+  }
+
+  room.pendingMembers.splice(pendingMemberIndex, 1);
+
+  await room.save({ validateModifiedOnly: true });
+
+  emitToUser(userId, SOCKET_EVENTS.ROOM_REJECTED, {
+    roomId,
+  });
+
+  await createNotification({
+    recipient: userId,
+    sender: getUserId(room.createdBy),
+    type: 'room_rejected',
+    message: `${room.createdBy.name} rejected your request to join ${room.name}`,
+    metadata: {
+      roomId: room._id,
+      roomName: room.name,
+    },
+  });
+
+  return {
+    message: 'Join request rejected successfully.',
+  };
+};
+
+const removeMember = async ({ currentUserId, roomId, userId }) => {
+  validateObjectId(currentUserId, 'current user id');
+  validateObjectId(userId, 'user id');
+
+  const room = await findRoomById(roomId);
+
+  const isSelfRemoval = currentUserId.toString() === userId.toString();
+  const isOwner = room.createdBy.equals(currentUserId);
+
+  if (!isOwner && !isSelfRemoval) {
+    throw new AppError(
+      'You are not authorized to remove this member.',
+      403,
+    );
+  }
+
+  if (room.createdBy.equals(userId)) {
+    if (!isSelfRemoval) {
+      throw new AppError(
+        'Room owner cannot be removed from ownership.',
+        400,
+      );
+    }
+
+    room.members = room.members.filter(
+      (member) => getUserId(member.user) !== userId.toString(),
+    );
+
+    await room.save({ validateModifiedOnly: true });
+
+    return {
+      room,
+      message:
+        'Room owner remains the owner and is not listed as a member.',
+    };
+  }
+
+  const targetMember = findMember(room, userId);
+
+  if (!targetMember) {
+    throw new AppError('Room member not found.', 404);
   }
 
   room.members = room.members.filter(
-    m => m.user.toString() !== userId
+    (member) => getUserId(member.user) !== userId.toString(),
   );
 
-  await room.save();
+  await room.save({ validateModifiedOnly: true });
 
-  return { message: "Member removed" };
+  if (isSelfRemoval) {
+    const user = await User.findById(userId).select('name image');
+
+    emitToRoom(roomId, SOCKET_EVENTS.ROOM_MEMBER_LEFT, {
+      roomId,
+      user,
+    });
+  } else if (isOwner) {
+    emitToUser(userId, SOCKET_EVENTS.ROOM_KICKED, {
+      roomId,
+    });
+
+    const user = await User.findById(userId).select('name image');
+
+    emitToRoom(roomId, SOCKET_EVENTS.ROOM_MEMBER_LEFT, {
+      roomId,
+      user,
+    });
+  }
+
+  return {
+    room,
+    message: 'Member removed successfully.',
+  };
 };
 
-// -----------------------------
+const getMembers = async ({ currentUserId, roomId }) => {
+  validateObjectId(currentUserId, 'current user id');
 
-export const getMembers = async (roomId) => {
-  const room = await Room.findById(roomId)
-    .populate("members.user", "name email image");
+  const room = await findRoomById(
+    roomId,
+    Room.findById(roomId)
+      .populate('createdBy', 'name email image')
+      .populate('members.user', 'name email image'),
+  );
 
-  if (!room) throw new Error("Room not found");
+  ensureMember(room, currentUserId);
 
-  return { members: room.members };
+  return {
+    owner: room.createdBy,
+    members: room.members,
+  };
 };
 
-// -----------------------------
+const getPending = async ({ currentUserId, roomId }) => {
+  validateObjectId(currentUserId, 'current user id');
 
-export const getPending = async (roomId) => {
-  const room = await Room.findById(roomId)
-    .populate("pendingMembers.user", "name email image");
+  const room = await findRoomById(
+    roomId,
+    Room.findById(roomId).populate(
+      'pendingMembers.user',
+      'name email image',
+    ),
+  );
 
-  if (!room) throw new Error("Room not found");
+  ensureAdmin(room, currentUserId);
 
-  return { pending: room.pendingMembers };
+  return {
+    pendingMembers: room.pendingMembers,
+  };
+};
+
+export {
+  joinRoom,
+  approveMember,
+  rejectMember,
+  removeMember,
+  getMembers,
+  getPending,
 };

@@ -1,51 +1,50 @@
-import express from "express";
-import * as roomController from "./roomMembers.controller.js";
-import { protect } from "../../middlewares/auth.middleware.js";
-import { validate } from "../../middlewares/validate.middleware.js";
+import express from 'express';
+import * as roomMembersController from './roomMembers.controller.js';
+import * as authMiddleware from '../../middlewares/auth.middleware.js';
+import validation from '../../middlewares/validation.middleware.js';
+import * as roomMembersValidation from './roomMembers.validation.js';
 
-import {
-  joinRoomSchema,
-  approveMemberSchema,
-  removeMemberSchema,
-  getMembersSchema,
-  getPendingSchema
-} from "./roomMembers.validation.js";
+const roomMembersRouter = express.Router({ mergeParams: true });
 
-const router = express.Router();
-
-router.post(
-  "/:id/join",
-  protect,
-  validate(joinRoomSchema),
-  roomController.joinRoom
+roomMembersRouter.use(
+  authMiddleware.isAuthenticated,
+  authMiddleware.needVerify,
 );
 
-router.patch(
-  "/:id/members/:userId/approve",
-  protect,
-  validate(approveMemberSchema),
-  roomController.approveMember
+roomMembersRouter.post(
+  '/join',
+  validation(roomMembersValidation.joinRoomSchema),
+  roomMembersController.joinRoom,
 );
 
-router.delete(
-  "/:id/members/:userId",
-  protect,
-  validate(removeMemberSchema),
-  roomController.removeMember
+roomMembersRouter.patch(
+  '/members/:userId/approve',
+  validation(roomMembersValidation.approveMemberSchema),
+  roomMembersController.approveMember,
 );
 
-router.get(
-  "/:id/members",
-  protect,
-  validate(getMembersSchema),
-  roomController.getMembers
+roomMembersRouter.patch(
+  '/members/:userId/reject',
+  validation(roomMembersValidation.rejectMemberSchema),
+  roomMembersController.rejectMember,
 );
 
-router.get(
-  "/:id/pending",
-  protect,
-  validate(getPendingSchema),
-  roomController.getPending
+roomMembersRouter.delete(
+  '/members/:userId',
+  validation(roomMembersValidation.removeMemberSchema),
+  roomMembersController.removeMember,
 );
 
-export default router;
+roomMembersRouter.get(
+  '/members',
+  validation(roomMembersValidation.getMembersSchema),
+  roomMembersController.getMembers,
+);
+
+roomMembersRouter.get(
+  '/pending',
+  validation(roomMembersValidation.getPendingSchema),
+  roomMembersController.getPending,
+);
+
+export default roomMembersRouter;

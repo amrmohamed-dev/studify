@@ -1,4 +1,5 @@
 import User from './user.model.js';
+import Room from '../room/room.model.js';
 import * as cloudinaryService from '../../services/cloudinary.service.js';
 import APIFeatures from '../../utils/apiFeatures.js';
 import catchAsync from '../../utils/error/catchAsync.js';
@@ -27,6 +28,61 @@ const updateMe = catchAsync(async (req, res, next) => {
     status: 'success',
     data: {
       user,
+    },
+  });
+});
+
+const getMyFavourites = catchAsync(async (req, res, next) => {
+  const { _id } = req.user;
+  const user = await User.findById(_id)
+    .select('favouriteRooms')
+    .populate('favouriteRooms.room');
+
+  user.favouriteRooms.sort((a, b) => b.addedAt - a.addedAt);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      favouriteRooms: user.favouriteRooms,
+    },
+  });
+});
+
+const toggleFavourite = catchAsync(async (req, res, next) => {
+  const { user } = req;
+  const { roomId } = req.params;
+
+  const room = await Room.findById(roomId);
+
+  if (!room) {
+    return next(new AppError('No Room found with that ID', 404));
+  }
+
+  const favIndex = user.favouriteRooms.findIndex((fav) =>
+    fav.room.equals(roomId),
+  );
+
+  let action;
+
+  if (favIndex !== -1) {
+    action = 'removed from';
+    user.favouriteRooms.splice(favIndex, 1);
+  } else {
+    action = 'added to';
+    user.favouriteRooms.push({ room: roomId });
+  }
+
+  await user.save({ validateModifiedOnly: true });
+
+  const populatedUser = await User.findById(user._id)
+    .select('favouriteRooms')
+    .populate('favouriteRooms.room');
+
+  res.status(200).json({
+    status: 'success',
+    message: `Room ${action} favourites`,
+    data: {
+      favouriteRooms: populatedUser.favouriteRooms,
     },
   });
 });
@@ -143,6 +199,8 @@ const getAllUsers = catchAsync(async (req, res, next) => {
 export {
   getMe,
   updateMe,
+  getMyFavourites,
+  toggleFavourite,
   deleteMe,
   addProfilePhoto,
   deleteProfilePhoto,

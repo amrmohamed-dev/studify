@@ -1,41 +1,106 @@
-import * as roomService from "./roomMembers.service.js";
-import catchAsync from "../../utils/catchAsync.js";
+import * as roomMembersService from './roomMembers.service.js';
+import catchAsync from '../../utils/error/catchAsync.js';
 
-export const joinRoom = catchAsync(async (req, res) => {
-  const result = await roomService.joinRoom(
-    req.user._id,
-    req.params.id
-  );
+const joinRoom = catchAsync(async (req, res) => {
+  const result = await roomMembersService.joinRoom({
+    userId: req.user._id,
+    roomId: req.params.id,
+    password: req.body?.password,
+  });
 
-  res.status(200).json(result);
+  res.status(200).json({
+    status: 'success',
+    message: result.message,
+    data: {
+      room: result.room,
+    },
+  });
 });
 
-export const approveMember = catchAsync(async (req, res) => {
-  const result = await roomService.approveMember(
-    req.user._id,
-    req.params.id,
-    req.params.userId
-  );
+const approveMember = catchAsync(async (req, res) => {
+  const result = await roomMembersService.approveMember({
+    currentUserId: req.user._id,
+    roomId: req.params.id,
+    userId: req.params.userId,
+  });
 
-  res.status(200).json(result);
+  res.status(200).json({
+    status: 'success',
+    message: result.message,
+    data: {
+      room: result.room,
+    },
+  });
 });
 
-export const removeMember = catchAsync(async (req, res) => {
-  const result = await roomService.removeMember(
-    req.user._id,
-    req.params.id,
-    req.params.userId
-  );
+const rejectMember = catchAsync(async (req, res) => {
+  const result = await roomMembersService.rejectMember({
+    currentUserId: req.user._id,
+    roomId: req.params.id,
+    userId: req.params.userId,
+  });
 
-  res.status(200).json(result);
+  res.status(200).json({
+    status: 'success',
+    message: result.message,
+    data: {
+      room: result.room,
+    },
+  });
 });
 
-export const getMembers = catchAsync(async (req, res) => {
-  const result = await roomService.getMembers(req.params.id);
-  res.status(200).json(result);
+const removeMember = catchAsync(async (req, res) => {
+  const result = await roomMembersService.removeMember({
+    currentUserId: req.user._id,
+    roomId: req.params.id,
+    userId: req.params.userId,
+  });
+
+  res.status(200).json({
+    status: 'success',
+    message: result.message,
+    data: {
+      room: result.room,
+    },
+  });
 });
 
-export const getPending = catchAsync(async (req, res) => {
-  const result = await roomService.getPending(req.params.id);
-  res.status(200).json(result);
+const getMembers = catchAsync(async (req, res) => {
+  const result = await roomMembersService.getMembers({
+    currentUserId: req.user._id,
+    roomId: req.params.id,
+  });
+
+  res.status(200).json({
+    status: 'success',
+    results: result.members.length,
+    data: {
+      owner: result.owner,
+      members: result.members,
+    },
+  });
 });
+
+const getPending = catchAsync(async (req, res) => {
+  const result = await roomMembersService.getPending({
+    currentUserId: req.user._id,
+    roomId: req.params.id,
+  });
+
+  res.status(200).json({
+    status: 'success',
+    results: result.pendingMembers.length,
+    data: {
+      pendingMembers: result.pendingMembers,
+    },
+  });
+});
+
+export {
+  joinRoom,
+  approveMember,
+  rejectMember,
+  removeMember,
+  getMembers,
+  getPending,
+};
