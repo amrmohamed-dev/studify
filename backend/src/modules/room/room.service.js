@@ -1,6 +1,8 @@
 import Room from './room.model.js';
 import APIFeatures from '../../utils/apiFeatures.js';
 import * as cloudinaryService from '../../services/cloudinary.service.js';
+import { emitToRoom } from '../../sockets/utils/emit.js';
+import SOCKET_EVENTS from '../../sockets/constants.js';
 
 const createRoom = async ({ userId, data, file }) => {
   let imageData = { url: null, publicId: null };
@@ -96,6 +98,8 @@ const updateRoom = async ({ room, data, file }) => {
   }
 
   await room.save({ validateModifiedOnly: true });
+
+  emitToRoom(room._id, SOCKET_EVENTS.ROOM_UPDATED, { room });
 
   return room;
 };
