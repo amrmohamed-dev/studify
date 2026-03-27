@@ -1,0 +1,147 @@
+.rooms-page {
+  padding: 2rem;
+
+  .rooms-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+
+    h1 {
+      margin: 0;
+      font-size: 1.8rem;
+    }
+
+    p {
+      margin: 0.2rem 0 0;
+      color: #666;
+    }
+
+    .rooms-header__stats {
+      display: flex;
+      gap: 1.5rem;
+
+      .stat {
+        text-align: center;
+        .stat-val {
+          display: block;
+          font-weight: bold;
+          font-size: 1.5rem;
+        }
+        .stat-label {
+          font-size: 0.85rem;
+          color: #888;
+        }
+      }
+    }
+  }
+
+  .rooms-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+
+    &__search {
+      flex: 1;
+      padding: 0.5rem 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      margin-right: 1rem;
+    }
+
+    &__view {
+      button {
+        margin-left: 0.5rem;
+        padding: 0.3rem 0.7rem;
+        border: 1px solid #ccc;
+        background: none;
+        border-radius: 4px;
+        cursor: pointer;
+        &.active {
+          background: #007bff;
+          color: #fff;
+          border-color: #007bff;
+        }
+      }
+    }
+  }
+
+  .rooms-filters {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+
+    button {
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      background: none;
+      cursor: pointer;
+      &.active {
+        background: #007bff;
+        color: #fff;
+        border-color: #007bff;
+      }
+    }
+  }
+
+  .rooms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+
+    &.list-view {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .rooms-empty {
+    text-align: center;
+    color: #666;
+    margin: 2rem 0;
+  }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+
+    button {
+      padding: 0.4rem 0.8rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: none;
+      cursor: pointer;
+      &.active {
+        background: #007bff;
+        color: #fff;
+        border-color: #007bff;
+      }
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  .fab {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #007bff;
+    color: #fff;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+}

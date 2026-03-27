@@ -1,0 +1,71 @@
+
+<div class="rooms-page">
+
+  <!-- Page Header -->
+  <div class="rooms-header">
+    <!-- <app-studify-logo variant="dark" /> -->
+    <div class="rooms-header__text">
+      <h1>All Rooms</h1>
+      <p>Explore curated spaces for deep collaboration and study.</p>
+    </div>
+
+    <div class="rooms-header__stats">
+      <div class="stat">
+        <span class="stat-val">{{ allRooms.length }}</span>
+        <span class="stat-label">Rooms</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="rooms-toolbar">
+    <input
+      type="text"
+      placeholder="Search rooms, subjects, or peers..."
+      [(ngModel)]="searchQuery"
+      (input)="onSearch()"
+      class="rooms-toolbar__search"
+    />
+
+    <div class="rooms-toolbar__view">
+      <button (click)="setViewMode('grid')" [class.active]="viewMode==='grid'">Grid</button>
+      <button (click)="setViewMode('list')" [class.active]="viewMode==='list'">List</button>
+    </div>
+  </div>
+
+  <!-- Filter Tabs -->
+  <div class="rooms-filters">
+    <button (click)="setFilter('all')" [class.active]="activeFilter==='all'">All Rooms</button>
+    <button (click)="setFilter('my')" [class.active]="activeFilter==='my'">My Rooms</button>
+    <button (click)="setFilter('public')" [class.active]="activeFilter==='public'">Public</button>
+    <button (click)="setFilter('private')" [class.active]="activeFilter==='private'">Private</button>
+    <button (click)="setFilter('favourites')" [class.active]="activeFilter==='favourites'">Favourites</button>
+  </div>
+
+  <!-- Rooms Grid/List -->
+<div class="rooms-grid" [class.list-view]="viewMode==='list'">
+  <app-room-card
+    *ngFor="let room of filteredRooms"
+    [room]="room"
+    (joinRoom)="onJoinRoom($event)"
+    (viewRoom)="onViewRoom($event)"
+    (requestInvite)="onRequestInvite($event)"
+    (toggleBookmark)="onToggleBookmark($event)"
+  ></app-room-card>
+</div>
+
+  <!-- Empty State -->
+  <div *ngIf="filteredRooms.length===0" class="rooms-empty">
+    <p>No rooms match your search.</p>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button (click)="goToPage(currentPage-1)" [disabled]="currentPage===1">&#8249;</button>
+    <button *ngFor="let p of pageNumbers" (click)="goToPage(p)" [class.active]="p===currentPage">{{ p }}</button>
+    <button (click)="goToPage(currentPage+1)" [disabled]="currentPage===totalPages">&#8250;</button>
+  </div>
+
+  <!-- FAB: Create Room -->
+  <button class="fab" (click)="onCreateRoom()">+</button>
+</div>
