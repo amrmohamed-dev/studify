@@ -1,0 +1,50 @@
+<div class="chat-container">
+  <div class="chat-messages" #messagesContainer>
+
+    <div
+      *ngFor="let msg of messages"
+      class="message-group"
+      [ngClass]="isMe(msg) ? 'sent' : 'received'"
+    >
+
+      <ng-container *ngIf="!isMe(msg)">
+        <div 
+          class="avatar"
+          [style.background]="getAvatarColor(msg.sender?.name)"
+        >
+          {{ getInitial(msg.sender?.name) }}
+        </div>
+      </ng-container>
+
+      <div class="message-content">
+
+        <span class="message-meta">
+          {{ formatTime(msg.createdAt) }} •
+          {{ isMe(msg) ? 'You' : msg.sender?.name }}
+        </span>
+
+        <div class="bubble">
+          {{ msg.content }}
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="chat-input-area">
+    <input
+      [(ngModel)]="message"
+      placeholder="Type a message..."
+      (keyup.enter)="send()"
+    />
+
+    <button class="send-btn" (click)="send()">
+      <svg viewBox="0 0 24 24">
+        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+      </svg>
+    </button>
+  </div>
+
+</div>

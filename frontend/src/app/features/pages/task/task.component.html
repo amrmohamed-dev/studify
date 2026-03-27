@@ -1,0 +1,45 @@
+<div class="tasks-container">
+  <h3 class="tasks-title">Tasks</h3>
+
+  <!-- إضافة مهمة جديدة -->
+  <div class="task-input-area">
+    <input
+      [(ngModel)]="newTaskTitle"
+      placeholder="Add a new task..."
+      (keyup.enter)="addTask()"
+    />
+    <button (click)="addTask()">+</button>
+  </div>
+
+  <!-- قائمة المهام -->
+  <div class="task-list">
+    <div class="task-item" *ngFor="let task of tasks">
+      
+      <!-- زرار الـ check عشان toggle done -->
+      <div class="task-check" (click)="toggleTask(task)">
+        <span *ngIf="isDone(task)">✓</span>
+      </div>
+
+      <!-- عرض أو تعديل العنوان -->
+      <span *ngIf="!task.editing" class="task-title">{{ task.title }}</span>
+      <input
+        *ngIf="task.editing"
+        [(ngModel)]="task.title"
+        (keyup.enter)="updateTask(task._id, task.title); task.editing=false"
+      />
+
+      <!-- أزرار التحكم -->
+      <button
+        class="edit-btn"
+        title="Edit task"
+        (click)="$event.stopPropagation(); task.editing = !task.editing"
+      >✎</button>
+
+      <button
+        class="delete-btn"
+        title="Delete task"
+        (click)="$event.stopPropagation(); deleteTask(task._id)"
+      >✕</button>
+    </div>
+  </div>
+</div>

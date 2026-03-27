@@ -1,0 +1,211 @@
+<div class="room-layout">
+  <ng-container *ngIf="user$ | async as user">
+
+    <!-- ─── Toast Notifications ──────────────────────────────────────────────── -->
+    <div class="toast-container">
+      <div
+        *ngFor="let toast of toasts"
+        class="toast toast--{{ toast.type }}"
+        (click)="dismissToast(toast.id)">
+        <span class="toast-icon">
+          <ng-container [ngSwitch]="toast.type">
+            <span *ngSwitchCase="'success'">✓</span>
+            <span *ngSwitchCase="'error'">✕</span>
+            <span *ngSwitchCase="'warning'">⚠</span>
+            <span *ngSwitchDefault>ℹ</span>
+          </ng-container>
+        </span>
+        <span class="toast-message">{{ toast.message }}</span>
+      </div>
+    </div>
+
+    <!-- ─── Left Panel: Tasks ────────────────────────────────────────────────── -->
+    <aside class="panel left-panel">
+      <app-task [roomId]="roomId" [userId]="$any(user)._id"></app-task>
+
+      <button class="leave-btn" (click)="leaveRoom()">
+        <span class="leave-icon">⇤</span>
+        Leave Room
+      </button>
+    </aside>
+
+    <!-- ─── Main: Timer + Members ────────────────────────────────────────────── -->
+    <main class="main-content">
+      <div class="center-column">
+
+        <!-- ── Pomodoro Timer ──────────────────────────────────────────────── -->
+        <div class="timer-section">
+
+          <!-- Session Tabs -->
+          <div class="session-tabs">
+            <button
+              class="tab-btn"
+              [class.active]="sessionType === 'work'"
+              (click)="switchSession('work')">
+              Work
+            </button>
+            <button
+              class="tab-btn"
+              [class.active]="sessionType === 'short'"
+              (click)="switchSession('short')">
+              Short Break
+            </button>
+            <button
+              class="tab-btn"
+              [class.active]="sessionType === 'long'"
+              (click)="switchSession('long')">
+              Long Break
+            </button>
+          </div>
+
+          <!-- Timer Ring + Controls Row -->
+          <div class="timer-row">
+            <div class="timer-circle">
+              <svg class="timer-ring" viewBox="0 0 172 172">
+                <circle class="ring-bg" cx="86" cy="86" r="72"/>
+                <circle
+                  class="ring-progress"
+                  cx="86" cy="86" r="72"
+                  [style.stroke-dasharray]="CIRCUMFERENCE"
+                  [style.stroke-dashoffset]="ringOffset">
+                </circle>
+              </svg>
+              <div class="timer-inner">
+                <span class="timer-time">{{ formattedTime }}</span>
+                <span class="timer-label">{{ timerLabel }}</span>
+              </div>
+            </div>
+
+            <div class="timer-controls">
+              <button class="start-btn" (click)="toggleTimer()">
+                {{ isRunning ? '⏸' : isPaused ? '▶' : '▶' }}
+                <span>{{ isRunning ? 'Pause' : isPaused ? 'Resume' : 'Start' }}</span>
+              </button>
+              <button class="reset-btn" (click)="resetTimer()" title="Reset">↺</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Members Widget ──────────────────────────────────────────────── -->
+        <div class="members-widget">
+          <div class="members-header">
+            <h3 class="members-title">Study Mates</h3>
+            <span class="members-live-dot"></span>
+          </div>
+
+          <!-- Loading state -->
+          <div class="members-loading" *ngIf="membersLoading">
+            <span class="loading-spinner"></span>
+            <span>Loading members…</span>
+          </div>
+
+          <!-- Error state -->
+          <div class="members-error" *ngIf="membersError && !membersLoading">
+            <span>⚠ Could not load members.</span>
+          </div>
+
+          <!-- Active members list -->
+          <div class="members-list" *ngIf="!membersLoading && !membersError">
+            <div
+              *ngFor="let member of visibleMembers"
+              class="member-item"
+              [class.member-item--self]="member._id === currentUserId">
+
+              <!-- Avatar -->
+              <div class="member-avatar">
+                <img
+                  *ngIf="$any(member).avatar; else initialsAvatar"
+                  [src]="$any(member).avatar"
+                  [alt]="member.name"
+                  class="avatar-img"
+                />
+                <ng-template #initialsAvatar>
+                  <span class="avatar-initials">{{ getInitials(member.name) }}</span>
+                </ng-template>
+                <span
+                  class="status-dot"
+                  [class.focusing]="$any(member).status === 'focusing'">
+                </span>
+              </div>
+
+              <!-- Name & status -->
+              <div class="member-info">
+                <span class="member-name">
+                  {{ member.name }}
+                  <span class="you-badge" *ngIf="member._id === currentUserId">you</span>
+                  <span class="admin-badge" *ngIf="member._id === roomCreatedById">admin</span>
+                </span>
+                <span class="member-status" *ngIf="$any(member).status">
+                  {{ $any(member).status | titlecase }}
+                </span>
+              </div>
+
+              <!-- Admin: kick button (cannot kick self or owner) -->
+              <button
+                *ngIf="isAdmin && member._id !== roomCreatedById && member._id !== currentUserId"
+                class="kick-btn"
+                (click)="kickMember(member._id)"
+                title="Remove member">
+                ✕
+              </button>
+            </div>
+          </div>
+
+          <!-- Show more / less toggle -->
+          <button
+            *ngIf="members.length > 3"
+            class="view-all-btn"
+            (click)="toggleShowAllMembers()">
+            {{ showAllMembers ? '▲ SHOW LESS' : '▼ VIEW ALL ' + members.length + ' MEMBERS' }}
+          </button>
+
+          <!-- ── Pending Members (admin only) ────────────────────────────── -->
+          <div class="pending-section" *ngIf="isAdmin && pendingMembers.length > 0">
+            <div class="pending-header">
+              <span class="pending-title">Pending Requests</span>
+              <span class="pending-badge">{{ pendingMembers.length }}</span>
+            </div>
+
+            <div class="members-list pending-list">
+              <div
+                *ngFor="let member of pendingMembers"
+                class="member-item member-item--pending">
+
+                <div class="member-avatar">
+                  <img
+                    *ngIf="$any(member).avatar; else pendingInitials"
+                    [src]="$any(member).avatar"
+                    [alt]="member.name"
+                    class="avatar-img"
+                  />
+                  <ng-template #pendingInitials>
+                    <span class="avatar-initials avatar-initials--pending">
+                      {{ getInitials(member.name) }}
+                    </span>
+                  </ng-template>
+                </div>
+
+                <div class="member-info">
+                  <span class="member-name">{{ member.name }}</span>
+                  <span class="pending-label">Waiting…</span>
+                </div>
+
+                <div class="pending-actions">
+                  <button class="approve-btn" (click)="approveMember(member._id)">✓</button>
+                  <button class="reject-btn" (click)="rejectMember(member._id)">✕</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- ─── Right Panel: Chat ────────────────────────────────────────────────── -->
+    <aside class="panel right-panel">
+      <app-chat [roomId]="roomId" [userId]="$any(user)._id"></app-chat>
+    </aside>
+
+  </ng-container>
+</div>
