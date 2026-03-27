@@ -11,6 +11,7 @@ export const routes: Routes = [
     pathMatch: 'full',
     redirectTo: 'home',
   },
+
   {
     path: 'home',
     loadComponent: () =>
@@ -25,21 +26,32 @@ export const routes: Routes = [
       actionLink: '/rooms',
     },
   },
+
   {
     path: 'rooms',
-    canActivate: [authGuard],
+    
     loadComponent: () =>
-      import('./features/pages/simple-page/simple-page.component').then(
-        (m) => m.SimplePageComponent,
-      ),
-    data: {
-      title: 'Rooms',
-      description:
-        'Browse study rooms, join active discussions, and keep shared tasks organized in one place.',
-      actionLabel: 'Back Home',
-      actionLink: '/home',
-    },
+      import('./features/all-rooms/all-rooms.component')
+        .then(m => m.AllRoomsComponent),
   },
+
+
+  {
+    path: 'rooms/join',
+    
+    loadComponent: () =>
+      import('./features/join-room/join-room.component')
+        .then(m => m.JoinRoomComponent),
+  },
+
+  {
+    path: 'request-sent',
+    loadComponent: () =>
+      import('./features/request-sent/request-sent.component')
+        .then(m => m.RequestSentComponent),
+  },
+
+
   {
     path: 'rooms/join',
     canActivate: [authGuard],
@@ -91,21 +103,8 @@ export const routes: Routes = [
       actionLink: '/notifications',
     },
   },
-  {
-    path: 'settings',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/pages/simple-page/simple-page.component').then(
-        (m) => m.SimplePageComponent,
-      ),
-    data: {
-      title: 'Settings',
-      description:
-        'Manage your account details, profile preferences, and session settings from a single screen.',
-      actionLabel: 'Go To Login',
-      actionLink: '/login',
-    },
-  },
+
+
   {
     path: 'notifications',
     canActivate: [authGuard],
@@ -121,37 +120,43 @@ export const routes: Routes = [
       actionLink: '/friends',
     },
   },
+
+
+  {
+    path: 'settings',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/pages/simple-page/simple-page.component').then(
+        (m) => m.SimplePageComponent,
+      ),
+  },
   {
     path: 'login',
     canActivate: [guestGuard],
     loadComponent: () =>
-      import('./features/auth/pages/login-page/login-page.component').then(
-        (m) => m.LoginPageComponent,
-      ),
+      import('./features/auth/pages/login-page/login-page.component')
+        .then((m) => m.LoginPageComponent),
   },
   {
     path: 'register',
     canActivate: [guestGuard],
     loadComponent: () =>
-      import('./features/auth/pages/register-page/register-page.component').then(
-        (m) => m.RegisterPageComponent,
-      ),
+      import('./features/auth/pages/register-page/register-page.component')
+        .then((m) => m.RegisterPageComponent),
   },
   {
     path: 'otp',
     canActivate: [otpGuard],
     loadComponent: () =>
-      import('./features/auth/pages/otp-page/otp-page.component').then(
-        (m) => m.OtpPageComponent,
-      ),
+      import('./features/auth/pages/otp-page/otp-page.component')
+        .then((m) => m.OtpPageComponent),
   },
   {
     path: 'reset-password',
     canActivate: [guestGuard],
     loadComponent: () =>
-      import('./features/auth/pages/reset-password-page/reset-password-page.component').then(
-        (m) => m.ResetPasswordPageComponent,
-      ),
+      import('./features/auth/pages/reset-password-page/reset-password-page.component')
+        .then((m) => m.ResetPasswordPageComponent),
   },
   
   {

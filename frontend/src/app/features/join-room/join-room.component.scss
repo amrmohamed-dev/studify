@@ -1,0 +1,230 @@
+// ── Page Layout ───────────────────────────────────────────
+.join-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+
+  // Two-column card
+  &__panel,
+  &__form-wrap {
+    display: flex;
+    flex-direction: column;
+  }
+
+  
+
+  &__form-wrap {
+    flex: 1;
+    align-items: center;
+    gap: 16px;
+  }
+
+  &__form-card {
+    background: #fff;
+    border-radius: 18px ;
+    padding: 25px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    @media (max-width: 700px) {
+      border-radius: 18px;
+      padding: 24px;
+    }
+  }
+
+  &__form-header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__title {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #172033;
+    line-height: 1.1;
+  }
+
+  &__subtitle {
+    font-size: 0.875rem;
+    color: #667085;
+    line-height: 1.5;
+  }
+
+  // ── Admin Notice ──────────────────────────────────────
+  &__notice {
+    background: #fffae5;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    animation: fadeIn 0.2s ease;
+  }
+
+  &__notice-icon {
+    flex-shrink: 0;
+    padding-top: 1px;
+  }
+
+  &__notice-text {
+    font-size: 0.82rem;
+    color: #b45309;
+    line-height: 1.5;
+  }
+
+ 
+
+  // ── Form Footer links ─────────────────────────────────
+  &__form-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 6px;
+    border-top: 1px solid #d0d5dd;
+  }
+
+  &__footer-link {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.8rem;
+    color: #667085;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.2s;
+
+    &:hover { color: #005ea4; }
+  }
+
+  // ── Ecosystem footer ──────────────────────────────────
+  &__ecosystem {
+    font-size: 0.78rem;
+    color: #667085;
+    text-align: center;
+
+    strong { color: #005ea4; font-weight: 600; }
+  }
+}
+
+// ── Form Field ────────────────────────────────────────────
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &__label {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #667085;
+  }
+
+  &__input-wrap {
+    display: flex;
+    align-items: center;
+    background: #f9fafb;
+    border: 1.5px solid #d0d5dd;
+    border-radius: 12px;
+    padding: 0 14px;
+    gap: 10px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+
+    &:focus-within {
+      border-color: #005ea4;
+      box-shadow: 0 0 0 3px rgba(0,94,164,0.2);
+    }
+
+    &--error {
+      border-color: #e53e3e;
+    }
+  }
+
+  &__icon {
+    color: #667085;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+
+    &--hash {
+      font-size: 1.1rem;
+      font-weight: 700;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+  }
+
+  &__input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.9rem;
+    color: #172033;
+    padding: 13px 0;
+
+    &::placeholder { color: #667085; }
+  }
+
+  &__error {
+    font-size: 0.72rem;
+    color: #e53e3e;
+    font-weight: 500;
+  }
+}
+
+// ── Buttons ───────────────────────────────────────────────
+.btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 999px;
+  border: none;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  &--primary {
+    background: #005ea4;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+
+    &:hover:not(:disabled) { background: #004080; }
+    &:disabled { opacity: 0.65; cursor: not-allowed; }
+  }
+
+  &--loading { pointer-events: none; }
+
+  &__spinner {
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid rgba(255,255,255,0.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
