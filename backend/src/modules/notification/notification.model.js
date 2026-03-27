@@ -18,6 +18,7 @@ const notificationSchema = new mongoose.Schema(
         'friend_request',
         'friend_accepted',
         'room_approved',
+        'room_rejected',
         'task_assigned',
         'task_completed',
         'session_started',

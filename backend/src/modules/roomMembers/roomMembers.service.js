@@ -1,6 +1,10 @@
 import Room from '../room/room.model.js';
+import User from '../user/user.model.js';
 import AppError from '../../utils/error/appError.js';
 import validateObjectId from '../../utils/validateObjectId.js';
+import createNotification from '../../utils/notification.util.js';
+import { emitToUser, emitToRoom } from '../../sockets/utils/emit.js';
+import SOCKET_EVENTS from '../../sockets/constants.js';
 
 const getUserId = (value) =>
   value?._id?.toString?.() || value?.toString?.() || null;
@@ -83,6 +87,13 @@ const joinRoom = async ({ userId, roomId, password }) => {
     room.pendingMembers.push({ user: userId });
     await room.save({ validateModifiedOnly: true });
 
+    const user = await User.findById(userId).select('name image');
+
+    emitToUser(room.createdBy, SOCKET_EVENTS.ROOM_JOIN_REQUEST, {
+      roomId,
+      user,
+    });
+
     return {
       room: null,
       message: 'Join request sent successfully.',
@@ -109,6 +120,13 @@ const joinRoom = async ({ userId, roomId, password }) => {
 
   await room.save({ validateModifiedOnly: true });
 
+  const user = await User.findById(userId).select('name image');
+
+  emitToRoom(roomId, SOCKET_EVENTS.ROOM_MEMBER_JOINED, {
+    roomId,
+    user,
+  });
+
   return {
     room,
     message: 'Joined room successfully.',
@@ -119,7 +137,10 @@ const approveMember = async ({ currentUserId, roomId, userId }) => {
   validateObjectId(currentUserId, 'current user id');
   validateObjectId(userId, 'user id');
 
-  const room = await findRoomById(roomId);
+  const room = await findRoomById(
+    roomId,
+    Room.findById(roomId).populate('createdBy', 'name'),
+  );
 
   ensureAdmin(room, currentUserId);
   ensureRoomHasCapacity(room);
@@ -147,6 +168,29 @@ const approveMember = async ({ currentUserId, roomId, userId }) => {
 
   await room.save({ validateModifiedOnly: true });
 
+  emitToUser(userId, SOCKET_EVENTS.ROOM_APPROVED, {
+    roomId,
+  });
+
+  const user = await User.findById(userId).select('name image');
+
+  emitToRoom(roomId, SOCKET_EVENTS.ROOM_MEMBER_JOINED, {
+    roomId,
+    user,
+  });
+
+  await createNotification({
+    recipient: userId,
+    sender: getUserId(room.createdBy),
+    type: 'room_approved',
+    message: `${room.createdBy.name} approved your request to join ${room.name}`,
+    link: `rooms/${roomId}`,
+    metadata: {
+      roomId: room._id,
+      roomName: room.name,
+    },
+  });
+
   return {
     room,
     message: 'Member approved successfully.',
@@ -157,7 +201,10 @@ const rejectMember = async ({ currentUserId, roomId, userId }) => {
   validateObjectId(currentUserId, 'current user id');
   validateObjectId(userId, 'user id');
 
-  const room = await findRoomById(roomId);
+  const room = await findRoomById(
+    roomId,
+    Room.findById(roomId).populate('createdBy', 'name'),
+  );
 
   ensureAdmin(room, currentUserId);
 
@@ -172,6 +219,21 @@ const rejectMember = async ({ currentUserId, roomId, userId }) => {
   room.pendingMembers.splice(pendingMemberIndex, 1);
 
   await room.save({ validateModifiedOnly: true });
+
+  emitToUser(userId, SOCKET_EVENTS.ROOM_REJECTED, {
+    roomId,
+  });
+
+  await createNotification({
+    recipient: userId,
+    sender: getUserId(room.createdBy),
+    type: 'room_rejected',
+    message: `${room.createdBy.name} rejected your request to join ${room.name}`,
+    metadata: {
+      roomId: room._id,
+      roomName: room.name,
+    },
+  });
 
   return {
     message: 'Join request rejected successfully.',
@@ -226,6 +288,26 @@ const removeMember = async ({ currentUserId, roomId, userId }) => {
   );
 
   await room.save({ validateModifiedOnly: true });
+
+  if (isSelfRemoval) {
+    const user = await User.findById(userId).select('name image');
+
+    emitToRoom(roomId, SOCKET_EVENTS.ROOM_MEMBER_LEFT, {
+      roomId,
+      user,
+    });
+  } else if (isOwner) {
+    emitToUser(userId, SOCKET_EVENTS.ROOM_KICKED, {
+      roomId,
+    });
+
+    const user = await User.findById(userId).select('name image');
+
+    emitToRoom(roomId, SOCKET_EVENTS.ROOM_MEMBER_LEFT, {
+      roomId,
+      user,
+    });
+  }
 
   return {
     room,
