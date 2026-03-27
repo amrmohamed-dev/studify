@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { otpGuard } from './core/guards/otp.guard';
+import { roomGuard } from './core/guards/room.guard';
+
 
 export const routes: Routes = [
   {
@@ -51,6 +53,14 @@ export const routes: Routes = [
       actionLabel: 'Back to Rooms',
       actionLink: '/rooms',
     },
+  },
+  {
+    path: 'rooms/:roomId',
+    canActivate: [authGuard,roomGuard],
+    loadComponent: () =>
+      import('./features/pages/room/room.component').then(
+        (m) => m.RoomComponent,
+      ),
   },
   {
     path: 'rooms/:id',
@@ -143,6 +153,7 @@ export const routes: Routes = [
         (m) => m.ResetPasswordPageComponent,
       ),
   },
+  
   {
     path: '**',
     redirectTo: 'home',
