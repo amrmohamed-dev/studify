@@ -56,6 +56,24 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'rooms/create',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/room-settings/room-settings/room-settings.component').then(
+            (m) => m.RoomSettingsComponent,
+          ),
+        data: { mode: 'create' },
+      },
+      {
+        path: 'rooms/:roomId/settings',
+        canActivate: [authGuard, roomGuard],
+        loadComponent: () =>
+          import('./features/room-settings/room-settings/room-settings.component').then(
+            (m) => m.RoomSettingsComponent,
+          ),
+        data: { mode: 'edit' },
+      },
+      {
         path: 'rooms/:roomId',
         canActivate: [authGuard, roomGuard],
         loadComponent: () =>
@@ -150,24 +168,6 @@ export const routes: Routes = [
           ),
       },
     ],
-  },
-  {
-    path: 'rooms/:roomId/settings',
-    canActivate: [authGuard, roomGuard],
-    loadComponent: () =>
-      import('./features/room-settings/room-settings/room-settings.component').then(
-        (m) => m.RoomSettingsComponent,
-      ),
-    data: { mode: 'edit' },
-  },
-  {
-    path: 'rooms/create',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/room-settings/room-settings/room-settings.component').then(
-        (m) => m.RoomSettingsComponent,
-      ),
-    data: { mode: 'create' },
   },
   {
     path: '**',

@@ -43,10 +43,10 @@ export class RoomSettingsComponent implements OnInit {
   };
 
   ngOnInit(): void {
-    this.mode = this.route.snapshot.data['mode'];
-
     this.roomId = this.route.snapshot.paramMap.get('roomId') || '';
-    if (this.roomId) {
+    this.mode = this.route.snapshot.data['mode'] === 'edit' ? 'edit' : 'create';
+
+    if (this.mode === 'edit' && this.roomId) {
       this.fetchRoom();
     }
   }
@@ -65,6 +65,7 @@ export class RoomSettingsComponent implements OnInit {
         this.isFetching = false;
       },
       error: () => {
+        this.errorMessage = 'Failed to load room settings. Please try again.';
         this.isFetching = false;
       },
     });
@@ -114,6 +115,9 @@ export class RoomSettingsComponent implements OnInit {
   }
 
   onSubmit(): void {
+    this.successMessage = '';
+    this.errorMessage = '';
+
     if (!this.settings.name.trim()) {
       this.errorMessage = 'Room name is required.';
       return;
@@ -128,11 +132,9 @@ export class RoomSettingsComponent implements OnInit {
     }
 
     this.isLoading = true;
-    this.successMessage = '';
-    this.errorMessage = '';
 
     const formData = new FormData();
-    formData.append('name', this.settings.name);
+    formData.append('name', this.settings.name.trim());
     formData.append('maxMembers', this.settings.maxMembers.toString());
     formData.append('privacyType', this.settings.privacyType);
 
@@ -149,8 +151,11 @@ export class RoomSettingsComponent implements OnInit {
 
     if (this.mode === 'edit') {
       this.roomService.updateRoom(this.roomId, formData).subscribe({
-        next: () => {
+        next: (room) => {
           this.isLoading = false;
+          if (room) {
+            this.previewImage = room.image?.url || this.previewImage;
+          }
           this.successMessage = 'Room settings updated successfully!';
           setTimeout(() => (this.successMessage = ''), 3500);
         },
@@ -165,10 +170,14 @@ export class RoomSettingsComponent implements OnInit {
 
     if (this.mode === 'create') {
       this.roomService.createRoom(formData).subscribe({
-        next: () => {
+        next: (room) => {
           this.isLoading = false;
-          this.successMessage = 'Room created successfully!';
-          setTimeout(() => (this.successMessage = ''), 3500);
+          if (room?._id) {
+            this.router.navigate(['/rooms', room._id]);
+            return;
+          }
+
+          this.router.navigate(['/rooms']);
         },
         error: (err: any) => {
           this.isLoading = false;
@@ -180,6 +189,11 @@ export class RoomSettingsComponent implements OnInit {
   }
 
   goBack(): void {
+    if (this.mode === 'create') {
+      this.router.navigate(['/rooms']);
+      return;
+    }
+
     this.router.navigate(['/rooms', this.roomId]);
   }
 }

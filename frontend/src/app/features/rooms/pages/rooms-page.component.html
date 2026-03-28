@@ -9,7 +9,10 @@
       </p>
     </div>
 
-    <a class="btn-primary" routerLink="/rooms/join">Join with room ID</a>
+    <div class="rooms-page__actions">
+      <a class="btn-secondary" routerLink="/rooms/create">Create room</a>
+      <a class="btn-primary" routerLink="/rooms/join">Join with room ID</a>
+    </div>
   </div>
 
   <section class="rooms-toolbar panel-surface">
@@ -55,10 +58,17 @@
     </button>
     <button
       type="button"
-      [class.active]="activeFilter === 'private'"
-      (click)="setFilter('private')"
+      [class.active]="activeFilter === 'private_request'"
+      (click)="setFilter('private_request')"
     >
-      Private
+      Private Request
+    </button>
+    <button
+      type="button"
+      [class.active]="activeFilter === 'private_password'"
+      (click)="setFilter('private_password')"
+    >
+      Private Password
     </button>
   </div>
 

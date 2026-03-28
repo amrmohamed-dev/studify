@@ -6,6 +6,12 @@
   gap: $space-6;
 }
 
+.rooms-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-3;
+}
+
 .rooms-toolbar {
   @include card-style($padding: $space-5, $radius: $radius-xl, $shadow: $shadow-soft);
   @include flex-center(row, space-between, flex-end, $space-4);

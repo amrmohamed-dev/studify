@@ -39,6 +39,9 @@
           {{ activeSession ? sessionLabel : 'Room active' }}
         </span>
         @if (isOwner) {
+          <a class="btn-secondary" [routerLink]="['/rooms', roomId, 'settings']">
+            Settings
+          </a>
           <a class="btn-ghost" routerLink="/rooms">Back to rooms</a>
         } @else {
           <button class="btn-danger" type="button" (click)="leaveRoom()">

@@ -10,7 +10,7 @@ import {
   UserPreview,
 } from '../../shared/models/room.models';
 
-type RoomsFilter = 'all' | 'my' | 'public' | 'private';
+type RoomsFilter = 'all' | 'my' | 'public' | 'private_request' | 'private_password';
 
 interface RoomsResponse {
   status: string;
@@ -97,12 +97,13 @@ export class RoomService {
     if (filter === 'public') {
       params = params.set('privacyType', 'public');
     }
+    
+    if (filter === 'private_request') {
+      params = params.set('privacyType', 'private_request');
+    }
 
-    if (filter === 'private') {
-      params = params.set(
-        'privacyType[in]',
-        'private_request,private_password',
-      );
+    if (filter === 'private_password') {
+      params = params.set('privacyType', 'private_password');
     }
 
     if (filter === 'my' && userId) {
@@ -131,12 +132,16 @@ export class RoomService {
     );
   }
 
-  createRoom(data: FormData) {
-    return this.http.post(this.api, data);
+  createRoom(data: FormData): Observable<Room | null> {
+    return this.http
+      .post<RoomMutationResponse>(this.api, data)
+      .pipe(map((response) => response.data.room ?? null));
   }
 
-  updateRoom(roomId: string, data: FormData) {
-    return this.http.patch(`${this.api}/${roomId}`, data);
+  updateRoom(roomId: string, data: FormData): Observable<Room | null> {
+    return this.http
+      .patch<RoomMutationResponse>(`${this.api}/${roomId}`, data)
+      .pipe(map((response) => response.data.room ?? null));
   }
 
   getRoomMembers(roomId: string): Observable<UserPreview[]> {
