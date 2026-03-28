@@ -6,7 +6,10 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "frontend:dev": "pnpm --dir frontend start",
+    "frontend:build": "pnpm --dir frontend build",
+    "prod:build": "pnpm install && pnpm --dir frontend install && pnpm frontend:build"
   },
   "private": true,
   "dependencies": {
