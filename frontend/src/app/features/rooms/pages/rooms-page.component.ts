@@ -9,7 +9,7 @@ import { Room } from '../../../core/models/room.model';
 import { RoomCardComponent } from '../../../shared/components/room-card/room-card.component';
 import { StateCardComponent } from '../../../shared/ui/state-card/state-card.component';
 
-type FilterTab = 'all' | 'my' | 'public' | 'private';
+type FilterTab = 'all' | 'my' | 'public' | 'private_request' | 'private_password';
 
 @Component({
   selector: 'app-rooms-page',
@@ -30,7 +30,7 @@ export class RoomsPageComponent {
   currentUserId: string | null = null;
 
   searchQuery = '';
-  activeFilter: FilterTab = 'all';
+  activeFilter: any = 'all';
 
   loading = true;
   errorMessage = '';
