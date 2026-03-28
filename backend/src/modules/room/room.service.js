@@ -37,7 +37,22 @@ const getRoomById = async (id) => {
 };
 
 const getAllRooms = async (query) => {
-  const features = new APIFeatures(Room.find(), query).search().filter();
+  const normalizedQuery = { ...query };
+  let mongooseQuery = Room.find();
+
+  if (normalizedQuery['members.user']) {
+    const userId = normalizedQuery['members.user'];
+
+    mongooseQuery = Room.find({
+      $or: [{ createdBy: userId }, { 'members.user': userId }],
+    });
+
+    delete normalizedQuery['members.user'];
+  }
+
+  const features = new APIFeatures(mongooseQuery, normalizedQuery)
+    .search()
+    .filter();
 
   const countQuery = features.mongooseQuery.clone();
 

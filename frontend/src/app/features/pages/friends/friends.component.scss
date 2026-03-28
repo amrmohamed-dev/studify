@@ -1,0 +1,94 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.friends-page {
+  display: grid;
+  gap: $space-6;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-3;
+
+  button {
+    @include button-style(outline);
+    display: inline-flex;
+    align-items: center;
+    gap: $space-2;
+    color: $text-muted-color;
+    box-shadow: none;
+
+    &.active {
+      background: rgba($primary-color, 0.12);
+      border-color: rgba($primary-color, 0.12);
+      color: $primary-color;
+    }
+  }
+}
+
+.friend-list {
+  display: grid;
+  gap: $space-3;
+}
+
+.friend-card {
+  @include flex-center(row, flex-start, center, $space-4);
+  @include card-style($padding: $space-4, $radius: $radius-lg, $shadow: $shadow-card);
+  @include transition((transform, box-shadow, border-color));
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: $shadow-soft;
+  }
+}
+
+.friend-card__avatar {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  background: linear-gradient(135deg, $primary-color, rgba($secondary-color, 0.9));
+  color: $on-primary-color;
+  display: grid;
+  place-items: center;
+  font-weight: $weight-black;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.friend-card__content {
+  flex: 1;
+  display: grid;
+  gap: $space-1;
+
+  span {
+    color: $text-muted-color;
+  }
+}
+
+.friend-card__actions {
+  display: flex;
+  gap: $space-2;
+}
+
+@media (max-width: 720px) {
+  .friend-card {
+    flex-wrap: wrap;
+  }
+
+  .friend-card__actions,
+  .friend-card .btn-primary {
+    width: 100%;
+  }
+
+  .friend-card__actions .btn-primary,
+  .friend-card__actions .btn-ghost {
+    flex: 1;
+  }
+}

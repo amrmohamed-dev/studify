@@ -1,0 +1,150 @@
+<section class="app-page friends-page">
+  <div class="page-head">
+    <div>
+      <span class="eyebrow">Friends</span>
+      <h1>Your study circle.</h1>
+      <p>
+        Keep classmates close, respond to requests quickly, and grow the people
+        you study with most.
+      </p>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button
+      type="button"
+      [class.active]="activeTab === 'friends'"
+      (click)="activeTab = 'friends'"
+    >
+      My friends
+      <span class="badge">{{ friends.length }}</span>
+    </button>
+
+    <button
+      type="button"
+      [class.active]="activeTab === 'requests'"
+      (click)="activeTab = 'requests'"
+    >
+      Requests
+      <span class="badge">{{ requests.length }}</span>
+    </button>
+
+    <button
+      type="button"
+      [class.active]="activeTab === 'users'"
+      (click)="activeTab = 'users'"
+    >
+      Add people
+      <span class="badge">{{ users.length }}</span>
+    </button>
+  </div>
+
+  @if (loading && activeTab === 'friends') {
+    <app-state-card
+      kind="loading"
+      title="Loading your study circle"
+      message="We are fetching your friends and pending invitations."
+    ></app-state-card>
+  } @else if (activeTab === 'friends' && !friends.length) {
+    <app-state-card
+      kind="empty"
+      title="No friends yet"
+      message="Start by sending a few requests from the Add people tab."
+    ></app-state-card>
+  } @else if (activeTab === 'requests' && !requests.length) {
+    <app-state-card
+      kind="empty"
+      title="No pending requests"
+      message="When classmates reach out, their requests will appear here."
+    ></app-state-card>
+  } @else if (activeTab === 'users' && !users.length) {
+    <app-state-card
+      kind="empty"
+      title="No suggestions right now"
+      message="You are all caught up on your class network for the moment."
+    ></app-state-card>
+  } @else {
+    <div class="friend-list">
+      @if (activeTab === 'friends') {
+        @for (friendship of friends; track friendship._id) {
+          <article class="friend-card">
+            <div class="friend-card__avatar">
+              @if (friendship.friend.image?.url) {
+                <img
+                  [src]="friendship.friend.image?.url"
+                  [alt]="friendship.friend.name"
+                />
+              } @else {
+                <span>{{ avatarLabel(friendship.friend.name) }}</span>
+              }
+            </div>
+
+            <div class="friend-card__content">
+              <strong>{{ friendship.friend.name }}</strong>
+              <span>{{ friendship.friend.email }}</span>
+            </div>
+          </article>
+        }
+      }
+
+      @if (activeTab === 'requests') {
+        @for (request of requests; track request._id) {
+          <article class="friend-card">
+            <div class="friend-card__avatar">
+              @if (request.requester.image?.url) {
+                <img
+                  [src]="request.requester.image?.url"
+                  [alt]="request.requester.name"
+                />
+              } @else {
+                <span>{{ avatarLabel(request.requester.name) }}</span>
+              }
+            </div>
+
+            <div class="friend-card__content">
+              <strong>{{ request.requester.name }}</strong>
+              <span>{{ request.requester.email }}</span>
+            </div>
+
+            <div class="friend-card__actions">
+              <button class="btn-primary" type="button" (click)="accept(request._id)">
+                Accept
+              </button>
+              <button class="btn-ghost" type="button" (click)="reject(request._id)">
+                Decline
+              </button>
+            </div>
+          </article>
+        }
+      }
+
+      @if (activeTab === 'users') {
+        @for (user of users; track user._id) {
+          <article class="friend-card">
+            <div class="friend-card__avatar">
+              @if (user.image?.url) {
+                <img [src]="user.image?.url" [alt]="user.name" />
+              } @else {
+                <span>{{ avatarLabel(user.name) }}</span>
+              }
+            </div>
+
+            <div class="friend-card__content">
+              <strong>{{ user.name }}</strong>
+              <span>{{ user.email }}</span>
+            </div>
+
+            <button
+              class="btn-primary"
+              type="button"
+              [disabled]="isPending(user._id)"
+              (click)="send(user._id)"
+            >
+              {{ isPending(user._id) ? 'Pending' : 'Send request' }}
+            </button>
+          </article>
+        }
+      }
+    </div>
+  }
+</section>

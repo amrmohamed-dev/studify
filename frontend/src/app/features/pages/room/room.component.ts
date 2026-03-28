@@ -5,10 +5,10 @@ import { Observable, Subscription } from 'rxjs';
 import { ChatComponent } from '../chat/chat.component';
 import { TaskComponent } from '../task/task.component';
 import { AuthService } from '../../../core/services/auth.service';
-import { RoomService, RoomMember } from '../../../core/services/room.service';
+import { RoomService } from '../../../core/services/room.service';
 import { SocketService } from '../../../core/services/socket.service';
+import { User } from '../../../core/models/room.model';
 import { Location } from '@angular/common';
-// ─── Timer Types ──────────────────────────────────────────────────────────────
 
 type SessionType = 'work' | 'short' | 'long';
 
@@ -24,15 +24,11 @@ const SESSION_LABELS: Record<SessionType, string> = {
   long:  'LONG BREAK',
 };
 
-// ─── Toast ────────────────────────────────────────────────────────────────────
-
 export interface Toast {
   id: number;
   message: string;
   type: 'info' | 'success' | 'error' | 'warning';
 }
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 @Component({
   selector: 'app-room',
@@ -42,29 +38,177 @@ export interface Toast {
   styleUrl: './room.component.scss',
 })
 export class RoomComponent implements OnInit, OnDestroy {
-
-  // ─── Auth ──────────────────────────────────────────────────────────────────
-
+  // ─── Core Services & State ────────────────────────────────────────────────
   user$!: Observable<any>;
   currentUserId = '';
   currentUserName = '';
-
-  // ─── Room ──────────────────────────────────────────────────────────────────
-
+  
   roomId = '';
   roomCreatedById = '';
+  roomName = '';
 
   get isAdmin(): boolean {
     return !!this.currentUserId && this.currentUserId === this.roomCreatedById;
   }
-  location = inject(Location)
-  members: RoomMember[] = [];
-  pendingMembers: RoomMember[] = [];
-  membersLoading = false;
+
+  location = inject(Location);
+  members: User[] = [];
+  pendingMembers: User[] = [];
+  
+  membersLoading = true;
   membersError = false;
   showAllMembers = false;
 
-  get visibleMembers(): RoomMember[] {
+  toasts: Toast[] = [];
+  private toastCounter = 0;
+  private subscriptions = new Subscription();
+  private timerInterval: ReturnType<typeof setInterval> | null = null;
+
+  // ─── Timer State ────────────────────────────────────────────────────────
+  sessionType: SessionType = 'work';
+  timeLeft = SESSION_DURATIONS['work'];
+  timerLabel = SESSION_LABELS['work'];
+  isRunning = false;
+  isPaused = false;
+  
+  readonly RADIUS = 72;
+  readonly CIRCUMFERENCE = 2 * Math.PI * this.RADIUS;
+
+  constructor(
+    public auth: AuthService,
+    private roomService: RoomService,
+    private socketService: SocketService,
+    private router: Router,
+    private route: ActivatedRoute,
+  ) {}
+
+  ngOnInit(): void {
+    this.user$ = this.auth.user$;
+
+    this.subscriptions.add(
+      this.auth.user$.subscribe((user) => {
+        if (user) {
+          this.currentUserId = user._id;
+          this.currentUserName = user.name ?? '';
+        }
+      })
+    );
+
+    this.subscriptions.add(
+      this.route.paramMap.subscribe((params) => {
+        const id = params.get('roomId');
+        if (id) {
+          this.roomId = id;
+          this.loadRoomData();
+          this.initSocketListeners();
+        } else {
+          this.navigateHome();
+        }
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.stopTimer();
+    this.socketService.removeRoomListeners();
+    this.subscriptions.unsubscribe();
+  }
+
+  // ─── Data Loading ────────────────────────────────────────────────────────
+
+  private loadRoomData(): void {
+    this.membersLoading = true;
+    this.membersError = false;
+
+    // 1. Fetch Room Meta Data
+    this.subscriptions.add(
+      this.roomService.getRoom(this.roomId).subscribe({
+        next: (room) => {
+          this.roomCreatedById = room.createdBy._id;
+          this.roomName = room.name;
+        },
+        error: () => this.handleAccessDenied() // if 403 or unavailable, fall to denied flow
+      })
+    );
+
+    // 2. Fetch Members explicitly
+    this.subscriptions.add(
+      this.roomService.getRoomMembers(this.roomId).subscribe({
+        next: (members) => {
+          this.members = members;
+          const isMember = this.members.some((m) => m._id === this.currentUserId);
+          
+          if (!isMember) {
+            this.handleAccessDenied();
+          } else {
+            this.membersLoading = false;
+            // Only admin needs to actively load pending members in layout
+            if (this.isAdmin) this.loadPendingMembers();
+          }
+        },
+        error: () => this.handleAccessDenied()
+      })
+    );
+  }
+
+  private loadPendingMembers(): void {
+    this.subscriptions.add(
+      this.roomService.getPendingMembers(this.roomId).subscribe({
+        next: (pending) => (this.pendingMembers = pending),
+        error: () => console.error('Could not load pending members'),
+      })
+    );
+  }
+
+  private handleAccessDenied(): void {
+    // According to specs, if not member -> redirect to join flow securely
+    this.showToast('Access Denied. You are not a member of this room.', 'error');
+    setTimeout(() => {
+      this.router.navigate(['/rooms/join'], { queryParams: { room: this.roomId } });
+    }, 1500);
+  }
+
+  // ─── Sockets ──────────────────────────────────────────────────────────────
+
+  private initSocketListeners(): void {
+    // Clear previously lingering listeners cleanly
+    this.socketService.removeRoomListeners();
+
+    this.socketService.onMemberJoined((data: { user: User }) => {
+      if (!this.members.find((m) => m._id === data.user._id)) {
+        this.members = [...this.members, data.user];
+        this.showToast(`${data.user.name} joined the room 👋`, 'info');
+      }
+    });
+
+    this.socketService.onMemberLeft((data: { userId: string; name?: string }) => {
+      const name = this.getMemberName(data.userId, data.name);
+      this.removeMember(data.userId);
+
+      if (data.userId === this.currentUserId) {
+        this.showToast('You left the room', 'info');
+        this.navigateHome();
+      } else {
+        this.showToast(`${name} left the room`, 'warning');
+      }
+    });
+
+    this.socketService.onKicked((data: { userId: string; name?: string }) => {
+      const name = this.getMemberName(data.userId, data.name);
+      this.removeMember(data.userId);
+
+      if (data.userId === this.currentUserId) {
+        this.showToast('You were removed from the room', 'error');
+        this.navigateHome(1500);
+      } else {
+        this.showToast(`${name} was removed from the room`, 'warning');
+      }
+    });
+  }
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────
+
+  get visibleMembers(): User[] {
     return this.showAllMembers ? this.members : this.members.slice(0, 3);
   }
 
@@ -73,36 +217,8 @@ export class RoomComponent implements OnInit, OnDestroy {
   }
 
   getInitials(name: string): string {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join('')
-      .toUpperCase();
+    return name ? name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase() : '?';
   }
-
-  // ─── Toast ─────────────────────────────────────────────────────────────────
-
-  toasts: Toast[] = [];
-  private toastCounter = 0;
-
-  showToast(message: string, type: Toast['type'] = 'info', duration = 3500): void {
-    const id = ++this.toastCounter;
-    this.toasts.push({ id, message, type });
-    setTimeout(() => this.dismissToast(id), duration);
-  }
-
-  dismissToast(id: number): void {
-    this.toasts = this.toasts.filter((t) => t.id !== id);
-  }
-
-  // ─── Navigation ────────────────────────────────────────────────────────────
-
-  private navigateHome(delay = 0): void {
-    setTimeout(() => this.router.navigate(['/home']), delay);
-  }
-
-  // ─── Shared Helpers ────────────────────────────────────────────────────────
 
   private getMemberName(userId: string, fallback?: string): string {
     return this.members.find((m) => m._id === userId)?.name ?? fallback ?? 'A member';
@@ -116,67 +232,34 @@ export class RoomComponent implements OnInit, OnDestroy {
     this.pendingMembers = this.pendingMembers.filter((m) => m._id !== userId);
   }
 
-  // ─── Socket Listeners ──────────────────────────────────────────────────────
+  private navigateHome(delay = 0): void {
+    setTimeout(() => this.router.navigate(['/home']), delay);
+  }
 
-  private initSocketListeners(): void {
+  showToast(message: string, type: Toast['type'] = 'info', duration = 3500): void {
+    const id = ++this.toastCounter;
+    this.toasts.push({ id, message, type });
+    setTimeout(() => this.dismissToast(id), duration);
+  }
 
-    this.socketService.onMemberJoined((data: { user: RoomMember }) => {
-      if (!this.members.find((m) => m._id === data.user._id)) {
-        this.members = [...this.members, data.user];
-      }
-      this.showToast(`${data.user.name} joined the room 👋`, 'info');
-    });
+  dismissToast(id: number): void {
+    this.toasts = this.toasts.filter((t) => t.id !== id);
+  }
 
-    // Handles BOTH voluntary leave AND leave confirmation for the current user.
-    // Navigation always happens here — never inside leaveRoom() — to avoid
-    // double-navigation race conditions between HTTP response and socket event.
-    this.socketService.onMemberLeft((data: { userId: string; name?: string }) => {
-      const memberName = this.getMemberName(data.userId, data.name);
-      this.removeMember(data.userId);
+  // ─── API Commands ────────────────────────────────────────────────────────
 
-      if (data.userId === this.currentUserId) {
-        this.showToast('You left the room', 'info');
+  leaveRoom(): void {
+    this.roomService.leaveRoom(this.roomId).subscribe({
+      next: () => console.log('Leave requested successfully'),
+      error: () => {
+        this.showToast('Failed to leave the room properly', 'error');
         this.navigateHome();
-      } else {
-        this.showToast(`${memberName} left the room`, 'warning');
-      }
-    });
-
-    this.socketService.onKicked((data: { userId: string; name?: string }) => {
-      const memberName = this.getMemberName(data.userId, data.name);
-      this.removeMember(data.userId);
-
-      if (data.userId === this.currentUserId) {
-        this.showToast('You were removed from the room', 'error');
-        this.navigateHome(1500);
-      } else {
-        this.showToast(`${memberName} was removed from the room`, 'warning');
       }
     });
   }
 
-  // ─── Leave Room ────────────────────────────────────────────────────────────
-leaveRoom(): void {
-  // 1. نبلغ السيرفر إننا عايزين نخرج
-  this.roomService.leaveRoom(this.roomId).subscribe({
-    next: () => {
-      // مش محتاج تنادي navigateHome هنا لأن 
-      // الـ socketService.onMemberLeft هي اللي هتعمل ده
-      console.log('Leave request sent');
-    },
-    error: (err) => {
-      this.showToast('Failed to leave the room properly', 'error');
-      // لو حصل مشكلة في السيرفر ممكن نرجعه يدوي كـ fallback
-      this.navigateHome();
-    }
-  });
-}
-
-  // ─── Admin Actions ─────────────────────────────────────────────────────────
-
   kickMember(userId: string): void {
     if (!this.isAdmin || userId === this.roomCreatedById) return;
-
     this.roomService.kickMember(this.roomId, userId).subscribe({
       next: () => {
         const name = this.getMemberName(userId);
@@ -189,7 +272,6 @@ leaveRoom(): void {
 
   approveMember(userId: string): void {
     if (!this.isAdmin) return;
-
     this.roomService.approveMember(this.roomId, userId).subscribe({
       next: () => {
         const approved = this.pendingMembers.find((m) => m._id === userId);
@@ -205,7 +287,6 @@ leaveRoom(): void {
 
   rejectMember(userId: string): void {
     if (!this.isAdmin) return;
-
     this.roomService.rejectMember(this.roomId, userId).subscribe({
       next: () => {
         const rejected = this.pendingMembers.find((m) => m._id === userId);
@@ -218,17 +299,7 @@ leaveRoom(): void {
     });
   }
 
-  // ─── Timer ─────────────────────────────────────────────────────────────────
-
-  sessionType: SessionType = 'work';
-  timeLeft = SESSION_DURATIONS['work'];
-  timerLabel = SESSION_LABELS['work'];
-  isRunning = false;
-  isPaused = false;
-  private timerInterval: ReturnType<typeof setInterval> | null = null;
-
-  readonly RADIUS = 72;
-  readonly CIRCUMFERENCE = 2 * Math.PI * this.RADIUS;
+  // ─── Timer Logic ────────────────────────────────────────────────────────
 
   get ringOffset(): number {
     const total = SESSION_DURATIONS[this.sessionType];
@@ -261,13 +332,15 @@ leaveRoom(): void {
   pauseTimer(): void {
     this.isRunning = false;
     this.isPaused = true;
-    this.clearTimerInterval();
+    if (this.timerInterval) clearInterval(this.timerInterval);
+    this.timerInterval = null;
   }
 
   stopTimer(): void {
     this.isRunning = false;
     this.isPaused = false;
-    this.clearTimerInterval();
+    if (this.timerInterval) clearInterval(this.timerInterval);
+    this.timerInterval = null;
   }
 
   resetTimer(): void {
@@ -280,103 +353,5 @@ leaveRoom(): void {
     this.sessionType = type;
     this.timeLeft = SESSION_DURATIONS[type];
     this.timerLabel = SESSION_LABELS[type];
-  }
-
-  private clearTimerInterval(): void {
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
-      this.timerInterval = null;
-    }
-  }
-
-  // ─── Subscriptions ─────────────────────────────────────────────────────────
-
-  private subscriptions = new Subscription();
-
-  // ─── Lifecycle ─────────────────────────────────────────────────────────────
-
-  constructor(
-    public auth: AuthService,
-    private roomService: RoomService,
-    private socketService: SocketService,
-    private router: Router,
-    private route: ActivatedRoute,
-  ) {}
-
-  ngOnInit(): void {
-    this.user$ = this.auth.user$;
-
-    this.subscriptions.add(
-      this.auth.user$.subscribe((user) => {
-        if (user) {
-          this.currentUserId   = user._id;
-          this.currentUserName = user.name ?? '';
-        }
-      })
-    );
-
-    this.subscriptions.add(
-      this.route.paramMap.subscribe((params) => {
-        const id = params.get('roomId');
-        if (id) {
-          this.roomId = id;
-          this.loadRoomData();
-          this.initSocketListeners();
-        } else {
-          console.error('No Room ID found in URL');
-          this.navigateHome();
-        }
-      })
-    );
-  }
-
-  ngOnDestroy(): void {
-    this.stopTimer();
-    this.socketService.removeRoomListeners();
-    this.subscriptions.unsubscribe();
-  }
-
-  // ─── Data Loading ──────────────────────────────────────────────────────────
-
-  private loadRoomData(): void {
-    this.membersLoading = true;
-    this.membersError   = false;
-
-    this.subscriptions.add(
-      this.roomService.getRoom(this.roomId).subscribe({
-        next: (room) => {
-          this.roomCreatedById = room.createdBy._id;
-          if (this.isAdmin) {
-            this.loadPendingMembers();
-          }
-        },
-        error: () => {
-          this.showToast('You are not a member of this room.', 'error');
-          this.navigateHome(1200);
-        },
-      })
-    );
-
-    this.subscriptions.add(
-      this.roomService.getRoomMembers(this.roomId).subscribe({
-        next: (members) => {
-          this.members        = members;
-          this.membersLoading = false;
-        },
-        error: () => {
-          this.membersError   = true;
-          this.membersLoading = false;
-        },
-      })
-    );
-  }
-
-  private loadPendingMembers(): void {
-    this.subscriptions.add(
-      this.roomService.getPendingMembers(this.roomId).subscribe({
-        next: (pending) => (this.pendingMembers = pending),
-        error: () => console.error('Could not load pending members'),
-      })
-    );
   }
 }

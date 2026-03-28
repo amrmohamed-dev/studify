@@ -1,0 +1,186 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: $font-sans;
+  background:
+    radial-gradient(circle at top left, rgba($primary-color, 0.08), transparent 32%),
+    linear-gradient(180deg, $bg-elevated-color 0%, $bg-color 28%, $surface-color 100%);
+  color: $text-color;
+}
+
+body {
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+.app-page {
+  width: min(1200px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: $space-8 0 $space-9;
+}
+
+.page-head {
+  @include flex-center(row, space-between, flex-start, $space-5);
+  margin-bottom: $space-6;
+
+  h1 {
+    @include section-title;
+  }
+
+  p {
+    max-width: 700px;
+    margin: $space-2 0 0;
+    color: $text-muted-color;
+  }
+}
+
+.page-section {
+  display: grid;
+  gap: $space-5;
+}
+
+.split-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: $space-3;
+  align-items: end;
+}
+
+.auth-page {
+  min-height: calc(100vh - 280px);
+  display: grid;
+  place-items: center;
+  padding: $space-3 0 $space-6;
+}
+
+.auth-card {
+  width: min(460px, 100%);
+  padding: clamp(28px, 4vw, 36px);
+}
+
+.auth-title {
+  margin: $space-5 0 $space-2;
+  font-size: clamp(1.9rem, 3vw, 2.4rem);
+  line-height: 1.1;
+}
+
+.auth-subtitle {
+  margin: 0 0 $space-6;
+  color: $text-muted-color;
+}
+
+.auth-form,
+.auth-actions {
+  display: grid;
+}
+
+.auth-form {
+  gap: $space-4;
+}
+
+.auth-actions {
+  gap: $space-3;
+  margin-top: $space-2;
+
+  > * {
+    width: 100%;
+  }
+}
+
+.auth-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-3;
+  margin-top: $space-3;
+  color: $text-muted-color;
+
+  a {
+    color: $primary-color;
+    font-weight: $weight-semibold;
+    text-decoration: none;
+  }
+}
+
+.simple-page {
+  padding: $space-8 0 $space-7;
+}
+
+.simple-page-card {
+  display: grid;
+  gap: $space-4;
+  padding: clamp(28px, 5vw, 56px);
+}
+
+.simple-page-card {
+  h1 {
+    @include section-title(clamp(2rem, 4vw, 3.5rem), 14ch);
+  }
+
+  p {
+    max-width: 640px;
+    margin: 0;
+    color: $text-muted-color;
+    font-size: $text-lg;
+  }
+
+  a {
+    @include button-style(primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    margin-top: $space-2;
+  }
+}
+
+@include respond-down(md) {
+  .app-page {
+    width: min(100% - 24px, 1200px);
+  }
+
+  .page-head {
+    flex-direction: column;
+  }
+}
+
+@include respond-down(sm) {
+  .app-page {
+    width: min(100% - 20px, 1200px);
+    padding: $space-7 0 $space-8;
+  }
+
+  .split-actions {
+    grid-template-columns: 1fr;
+  }
+}

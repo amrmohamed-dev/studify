@@ -1,0 +1,41 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.btn-primary,
+.btn-secondary,
+.btn-ghost,
+.btn-outline,
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+}
+
+.btn-primary {
+  @include button-style(primary);
+}
+
+.btn-secondary {
+  @include button-style(secondary);
+}
+
+.btn-ghost,
+.btn-outline {
+  @include button-style(outline);
+}
+
+.btn-danger {
+  @include button-style(danger);
+}
+
+.btn-link {
+  color: $text-muted-color;
+  text-decoration: none;
+  font-weight: $weight-bold;
+  @include transition((color));
+
+  &:hover {
+    color: $primary-color;
+  }
+}

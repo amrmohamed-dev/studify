@@ -1,141 +1,166 @@
 import {
+  AfterViewChecked,
   Component,
-  Input,
-  OnInit,
-  AfterViewInit,
-  OnDestroy,
-  ViewChild,
+  DestroyRef,
   ElementRef,
-  ViewEncapsulation,
+  Input,
+  ViewChild,
+  inject,
 } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { SocketService } from '../../../core/services/socket.service';
-import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { SocketService } from '../../../core/services/socket.service';
+import { ChatMessage } from '../../../shared/models/room.models';
+import { SOCKET_EVENTS } from '../../../shared/models/socket-events';
+
+interface MessagesResponse {
+  status: string;
+  data: {
+    messages: ChatMessage[];
+  };
+}
 
 @Component({
   selector: 'app-chat',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './chat.component.html',
-  styleUrls: ['./chat.component.scss'],
-  encapsulation: ViewEncapsulation.None,
+  styleUrl: './chat.component.scss',
 })
-export class ChatComponent implements OnInit, AfterViewInit, OnDestroy {
-  @Input() roomId!: string;
-  @Input() userId!: string;
+export class ChatComponent implements AfterViewChecked {
+  private readonly http = inject(HttpClient);
+  private readonly socketService = inject(SocketService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  @ViewChild('messagesContainer') messagesContainer!: ElementRef;
+  @Input({ required: true }) roomId = '';
+  @Input({ required: true }) userId = '';
 
-  messages: any[] = [];
-  message = '';
+  @ViewChild('messagesContainer') messagesContainer?: ElementRef<HTMLDivElement>;
 
-  constructor(private socketService: SocketService, private http: HttpClient) {}
+  messages: ChatMessage[] = [];
+  draft = '';
+  loading = true;
+  sending = false;
+  errorMessage = '';
+
+  private shouldStickToBottom = true;
 
   ngOnInit(): void {
-    this.initChat();
-  }
+    this.loadMessages();
 
-  ngAfterViewInit(): void {
-    this.scrollToBottom();
-  }
+    this.socketService
+      .listen<ChatMessage>(SOCKET_EVENTS.ROOM_MESSAGE)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((message) => {
+        const roomId =
+          typeof message.room === 'string' ? message.room : message.room?._id;
 
-  ngOnDestroy(): void {
-    this.socketService.leaveRoom(this.roomId);
-    this.socketService.removeMessagesListener();
-  }
-
-  initChat() {
-    // 🔹 Join the room
-    this.socketService.joinRoom(this.roomId);
-
-    // 🔹 Load old messages
-    this.http
-      .get<any>(`/api/v1/rooms/${this.roomId}/messages`)
-      .subscribe((res) => {
-        this.messages = (res.data.messages || []).reverse();
-        this.scrollToBottom();
-      });
-
-    // 🔹 Listen to incoming messages
-    this.socketService.getMessages((msg: any) => {
-      if (msg.room?.toString() === this.roomId) {
-        // ✅ Replace optimistic message if it exists
-        const tempIndex = this.messages.findIndex(
-          (m) =>
-            m._tempId &&
-            m.sender._id?.toString() === this.userId?.toString() &&
-            m.content === msg.content
-        );
-
-        if (tempIndex !== -1) {
-          this.messages[tempIndex] = msg;
-        } else {
-          this.messages.push(msg);
+        if (roomId !== this.roomId) {
+          return;
         }
 
-        this.scrollToBottom();
-      }
-    });
+        const tempIndex = this.messages.findIndex(
+          (item) =>
+            item._tempId &&
+            item.sender._id === message.sender._id &&
+            item.content === message.content,
+        );
 
-    this.socketService.onError((err) => {
-      console.error('Socket error:', err);
-    });
+        if (tempIndex === -1) {
+          this.messages = [...this.messages, message];
+        } else {
+          const next = [...this.messages];
+          next[tempIndex] = message;
+          this.messages = next;
+        }
+
+        this.shouldStickToBottom = true;
+      });
   }
 
-  send() {
-    if (!this.message.trim()) return;
+  ngAfterViewChecked(): void {
+    if (!this.shouldStickToBottom) {
+      return;
+    }
 
-    // 🔹 Optimistic message
-    const tempMsg = {
+    const container = this.messagesContainer?.nativeElement;
+
+    if (!container) {
+      return;
+    }
+
+    container.scrollTop = container.scrollHeight;
+    this.shouldStickToBottom = false;
+  }
+
+  send(): void {
+    const content = this.draft.trim();
+
+    if (!content || this.sending) {
+      return;
+    }
+
+    const optimisticMessage: ChatMessage = {
       _tempId: `temp-${Date.now()}`,
-      content: this.message,
-      sender: { _id: this.userId },
-      createdAt: new Date(),
       room: this.roomId,
+      sender: {
+        _id: this.userId,
+        name: 'You',
+      },
+      content,
+      createdAt: new Date().toISOString(),
     };
 
-    this.messages.push(tempMsg);
-    this.scrollToBottom();
+    this.messages = [...this.messages, optimisticMessage];
+    this.draft = '';
+    this.sending = true;
+    this.shouldStickToBottom = true;
 
-    // 🔹 Send to server
     this.socketService.sendMessage({
       roomId: this.roomId,
-      content: this.message,
+      content,
     });
 
-    this.message = '';
+    queueMicrotask(() => {
+      this.sending = false;
+    });
   }
 
-  scrollToBottom() {
-    setTimeout(() => {
-      const el = this.messagesContainer?.nativeElement;
-      if (el) {
-        el.scrollTop = el.scrollHeight;
-      }
-    }, 50);
-  }
-
-  isMe(msg: any): boolean {
-    return msg?.sender?._id?.toString() === this.userId?.toString();
+  isMine(message: ChatMessage): boolean {
+    return message.sender._id === this.userId;
   }
 
   formatTime(date: string): string {
-    if (!date) return '';
-    return new Date(date).toLocaleTimeString('en-US', {
-      hour: 'numeric',
+    return new Date(date).toLocaleTimeString([], {
+      hour: '2-digit',
       minute: '2-digit',
     });
   }
 
-  getInitial(name: string): string {
-    if (!name) return '?';
-    return name.charAt(0).toUpperCase();
+  senderInitial(message: ChatMessage): string {
+    return (message.sender.name || '?').charAt(0).toUpperCase();
   }
 
-  getAvatarColor(name: string): string {
-    const colors = ['#007bff', '#28a745', '#dc3545', '#ffc107', '#6f42c1'];
-    let index = name?.charCodeAt(0) % colors.length;
-    return colors[index];
+  private loadMessages(): void {
+    this.loading = true;
+    this.errorMessage = '';
+
+    this.http
+      .get<MessagesResponse>(`/api/v1/rooms/${this.roomId}/messages`)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          this.messages = response.data.messages.reverse();
+          this.loading = false;
+          this.shouldStickToBottom = true;
+        },
+        error: (error) => {
+          this.loading = false;
+          this.errorMessage =
+            error?.error?.message || 'Chat history could not be loaded.';
+        },
+      });
   }
 }

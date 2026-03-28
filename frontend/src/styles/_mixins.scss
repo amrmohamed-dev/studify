@@ -1,0 +1,122 @@
+@use 'sass:map';
+@use 'variables' as *;
+
+@mixin respond-down($breakpoint) {
+  @media (max-width: map.get($breakpoints, $breakpoint)) {
+    @content;
+  }
+}
+
+@mixin flex-center(
+  $direction: row,
+  $justify: center,
+  $align: center,
+  $gap: null
+) {
+  display: flex;
+  flex-direction: $direction;
+  justify-content: $justify;
+  align-items: $align;
+
+  @if $gap != null {
+    gap: $gap;
+  }
+}
+
+@mixin transition($properties: (transform, box-shadow, border-color, background-color, color)) {
+  $transitions: ();
+
+  @each $property in $properties {
+    $transitions: append($transitions, #{$property} 0.2s ease, comma);
+  }
+
+  transition: $transitions;
+}
+
+@mixin card-style(
+  $padding: $space-5,
+  $radius: $radius-lg,
+  $background: $surface-color,
+  $border-alpha: 0.08,
+  $shadow: $shadow-card
+) {
+  background: $background;
+  border: 1px solid rgba($primary-color, $border-alpha);
+  border-radius: $radius;
+  box-shadow: $shadow;
+  padding: $padding;
+}
+
+@mixin card-hover($translate: -3px, $shadow: $shadow-lifted) {
+  @include transition((transform, box-shadow));
+
+  &:hover {
+    transform: translateY($translate);
+    box-shadow: $shadow;
+  }
+}
+
+@mixin button-style($variant: primary) {
+  border: 1px solid transparent;
+  border-radius: $radius-pill;
+  padding: 12px 18px;
+  font-size: $text-base;
+  font-weight: $weight-bold;
+  cursor: pointer;
+  text-decoration: none;
+  @include transition((transform, box-shadow, background-color, border-color, color));
+
+  @if $variant == primary {
+    background: $primary-color;
+    color: $on-primary-color;
+  } @else if $variant == secondary {
+    background: rgba($secondary-color, 0.14);
+    color: $warning-color;
+  } @else if $variant == outline {
+    background: transparent;
+    border-color: $border-color;
+    color: $text-color;
+  } @else if $variant == danger {
+    background: rgba($error-color, 0.1);
+    color: $error-color;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: $shadow-card;
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+}
+
+@mixin input-style {
+  width: 100%;
+  border: 1px solid $border-color;
+  border-radius: $radius-md;
+  background: $surface-color;
+  color: $text-color;
+  padding: 14px 16px;
+  @include transition((border-color, box-shadow, background-color));
+
+  &::placeholder {
+    color: $text-muted-color;
+  }
+
+  &:focus {
+    outline: 0;
+    border-color: rgba($primary-color, 0.38);
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.14);
+  }
+}
+
+@mixin section-title($size: clamp(2rem, 4vw, 3rem), $max-width: 18ch) {
+  margin: 0;
+  max-width: $max-width;
+  font-size: $size;
+  line-height: 1.04;
+}

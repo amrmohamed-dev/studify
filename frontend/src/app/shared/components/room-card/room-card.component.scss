@@ -1,65 +1,93 @@
-@use '../../../../styles.scss' as v;
+@use 'variables' as *;
+@use 'mixins' as *;
+
 .room-card {
   overflow: hidden;
-  border-radius: var(--radius-xl);
   display: flex;
   flex-direction: column;
-  transition: 0.25s ease;
+  @include card-style($padding: $space-0, $radius: $radius-xl, $shadow: $shadow-soft);
+  @include card-hover(-4px, $shadow-card);
 }
 
-.room-card:hover {
-  transform: translateY(-6px);
-}
-
-/* صورة الروم */
-.room-image {
+.room-card__hero {
   position: relative;
-  height: 160px;
+  height: 180px;
   overflow: hidden;
+  background: linear-gradient(135deg, rgba($primary-color, 0.92), rgba($secondary-color, 0.85));
+
+  img,
+  .room-card__placeholder {
+    width: 100%;
+    height: 100%;
+  }
+
+  img {
+    object-fit: cover;
+  }
 }
 
-.room-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.room-card__placeholder {
+  display: grid;
+  place-items: center;
+  color: $on-primary-color;
+  font-size: 3rem;
+  font-weight: $weight-black;
+  text-transform: uppercase;
 }
 
-/* public / private badge */
-.room-type {
+.room-card__privacy {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  background: #e8f2fb;
-  color: var(--color-primary);
-  padding: 6px 12px;
-  border-radius: 999px;
+  top: $space-4;
+  left: $space-4;
+  padding: $space-2 $space-3;
+  border-radius: $radius-pill;
+  background: rgba($surface-color, 0.9);
+  color: $text-color;
   font-size: 0.8rem;
-  font-weight: 700;
+  font-weight: $weight-bold;
 }
 
-.room-type.private {
-  background: #fff1f2;
-  color: #be123c;
+.room-card__content,
+.room-card__copy {
+  display: grid;
 }
 
-/* المحتوى */
-.room-content {
-  padding: 18px;
+.room-card__content {
+  gap: $space-4;
+  padding: $space-5;
+}
+
+.room-card__copy {
+  gap: $space-2;
+
+  h3 {
+    margin: 0;
+    font-size: 1.18rem;
+  }
+
+  p {
+    margin: 0;
+    color: $text-muted-color;
+  }
+}
+
+.room-card__meta {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: $space-2;
 }
 
-.room-title {
-  margin: 0;
-  font-size: 1.2rem;
+.room-card__stat {
+  display: inline-flex;
+  align-items: center;
+  padding: $space-2 $space-3;
+  border-radius: $radius-pill;
+  background: $surface-muted-color;
+  color: $text-muted-color;
+  font-size: $text-sm;
+  font-weight: $weight-bold;
 }
 
-.room-members {
-  margin: 0;
-  color: var(--color-muted);
-}
-
-.join-btn {
-  margin-top: 6px;
+.room-card__action {
+  width: 100%;
 }

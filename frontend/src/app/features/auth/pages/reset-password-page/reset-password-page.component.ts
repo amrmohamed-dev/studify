@@ -23,7 +23,6 @@ export class ResetPasswordPageComponent implements OnInit {
   error = '';
   success = '';
 
-  // ✅ step control
   step: 'email' | 'reset' = 'email';
 
   resetForm = this.fb.nonNullable.group({
@@ -43,14 +42,12 @@ export class ResetPasswordPageComponent implements OnInit {
     const email = this.route.snapshot.queryParamMap.get('email');
     const otp = this.route.snapshot.queryParamMap.get('otp');
 
-    // ✅ لو جاي من OTP page
     if (email && otp) {
       this.step = 'reset';
       this.resetForm.patchValue({ email, otp });
     }
   }
 
-  // 📩 Step 1: send OTP
   sendOtp() {
     const email = this.resetForm.get('email')?.value;
 
@@ -84,7 +81,6 @@ export class ResetPasswordPageComponent implements OnInit {
       });
   }
 
-  // 🔐 Step 2: reset password
   submit() {
     if (this.step !== 'reset') return;
 
@@ -112,10 +108,7 @@ export class ResetPasswordPageComponent implements OnInit {
         finalize(() => (this.loading = false)),
       )
       .subscribe({
-        next: (res: any) => {
-          // 🔥 مهم جدًا (بما إن الباك بيرجع JWT)
-          this.authService['userSubject'].next(res.data.user);
-
+        next: () => {
           this.router.navigate(['/home']);
         },
         error: (err) => {

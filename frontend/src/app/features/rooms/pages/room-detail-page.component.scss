@@ -1,0 +1,215 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.room-page {
+  display: grid;
+  gap: $space-5;
+}
+
+.room-page__header,
+.room-summary__top,
+.room-members__pending-head {
+  @include flex-center(row, space-between, flex-start, $space-4);
+}
+
+.room-page__back {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-bottom: $space-3;
+  padding: $space-2 $space-3;
+  border-radius: $radius-pill;
+  background: rgba($primary-color, 0.08);
+  color: $primary-color;
+  font-size: $text-sm;
+  font-weight: $weight-bold;
+  text-decoration: none;
+}
+
+.room-page__header h1 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.02;
+}
+
+.room-page__header p,
+.room-summary__session p,
+.room-members__header p,
+.member-card__content span {
+  margin: $space-2 0 0;
+  color: $text-muted-color;
+}
+
+.room-page__header-actions,
+.room-summary__stats,
+.room-summary__presets,
+.member-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-3;
+}
+
+.room-banner {
+  padding: $space-4 $space-5;
+  border-radius: $radius-lg;
+  font-weight: $weight-bold;
+}
+
+.room-banner--info {
+  background: rgba($info-color, 0.1);
+  color: $info-color;
+}
+
+.room-banner--success {
+  background: rgba($success-color, 0.1);
+  color: $success-color;
+}
+
+.room-banner--warning {
+  background: rgba($secondary-color, 0.14);
+  color: $warning-color;
+}
+
+.room-banner--error {
+  background: rgba($error-color, 0.1);
+  color: $error-color;
+}
+
+.room-shell {
+  display: grid;
+  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr) minmax(320px, 360px);
+  gap: $space-4;
+  align-items: start;
+}
+
+.room-shell__tasks,
+.room-shell__chat {
+  min-height: 720px;
+}
+
+.room-shell__main,
+.room-summary,
+.room-summary__session,
+.room-members {
+  display: grid;
+  gap: $space-4;
+}
+
+.room-summary {
+  gap: $space-5;
+  background:
+    linear-gradient(180deg, rgba($primary-color, 0.04), transparent 38%),
+    $surface-color;
+}
+
+.room-summary__top h2,
+.room-members__header h3,
+.room-members__pending-head h4 {
+  margin: 0;
+}
+
+.room-summary__label {
+  display: block;
+  font-size: $text-sm;
+  font-weight: $weight-bold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: $text-muted-color;
+}
+
+.room-summary__session strong {
+  display: block;
+  margin-top: $space-2;
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.room-members__list {
+  display: grid;
+  gap: $space-3;
+}
+
+.room-members__pending {
+  display: grid;
+  gap: $space-3;
+  padding-top: $space-4;
+  border-top: 1px solid rgba($primary-color, 0.08);
+}
+
+.member-card {
+  @include flex-center(row, flex-start, center, $space-3);
+  padding: $space-3;
+  border-radius: $radius-lg;
+  background: $surface-muted-color;
+  @include transition((transform, background-color, box-shadow, border-color));
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: $shadow-card;
+  }
+}
+
+.member-card--pending {
+  border: 1px dashed rgba($secondary-color, 0.32);
+}
+
+.member-card__avatar {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  background: linear-gradient(135deg, $primary-color, rgba($secondary-color, 0.9));
+  color: $on-primary-color;
+  display: grid;
+  place-items: center;
+  font-weight: $weight-black;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.member-card__content {
+  flex: 1;
+  display: grid;
+  gap: $space-1;
+}
+
+@include respond-down(lg) {
+  .room-shell {
+    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  }
+
+  .room-shell__chat {
+    grid-column: 1 / -1;
+    min-height: auto;
+  }
+}
+
+@include respond-down(md) {
+  .room-page__header,
+  .room-summary__top {
+    flex-direction: column;
+  }
+
+  .room-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .room-shell__tasks,
+  .room-shell__chat {
+    min-height: auto;
+  }
+}
+
+@include respond-down(sm) {
+  .member-card,
+  .room-page__header-actions,
+  .member-card__actions,
+  .room-members__pending-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

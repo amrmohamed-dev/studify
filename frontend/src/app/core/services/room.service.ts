@@ -1,132 +1,238 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { map, Observable } from 'rxjs';
+import {
+  ApiMeta,
+  PaginatedResult,
+  Room,
+  RoomJoinResult,
+  RoomPrivacy,
+  UserPreview,
+} from '../../shared/models/room.models';
 
-export interface RoomMember {
-  _id: string;
-  name: string;
-  email?: string;
-  image?: { url: string | null };
+type RoomsFilter = 'all' | 'my' | 'public' | 'private';
+
+interface RoomsResponse {
+  status: string;
+  meta: ApiMeta;
+  data: {
+    rooms: Room[];
+  };
 }
 
-export interface Room {
-  _id: string;
-  name: string;
-  createdBy: {
-    _id: string;
-    name: string;
-    image?: { url: string | null };
+interface RoomsListResult extends PaginatedResult<Room> {
+  data: {
+    rooms: Room[];
   };
-  privacyType: string;
-  maxMembers: number;
-  members: {
-    _id: string;
-    user: RoomMember;
-    joinedAt: string;
-  }[];
-  pendingMembers: any[];
+  page: number;
+  totalPages: number;
+  totalResults: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+interface RoomResponse {
+  status: string;
+  data: {
+    room: Room;
+  };
+}
+
+interface RoomMembersResponse {
+  status: string;
+  data: {
+    owner: UserPreview;
+    members: Array<{
+      user: UserPreview;
+      joinedAt?: string;
+    }>;
+  };
+}
+
+interface PendingMembersResponse {
+  status: string;
+  data: {
+    pendingMembers: Array<{
+      user: UserPreview;
+      requestedAt?: string;
+    }>;
+  };
+}
+
+interface JoinRoomResponse {
+  status: string;
+  message: string;
+  data: {
+    room: Room | null;
+  };
+}
+
+interface RoomMutationResponse {
+  status: string;
+  data: {
+    room?: Room;
+  };
 }
 
 @Injectable({ providedIn: 'root' })
 export class RoomService {
-  private readonly API = '/api/v1/rooms';
+  private readonly http = inject(HttpClient);
+  private readonly api = '/api/v1/rooms';
 
-  constructor(private http: HttpClient) {}
+  getRooms(
+    page = 1,
+    limit = 12,
+    search = '',
+    filter: RoomsFilter = 'all',
+    userId?: string,
+  ): Observable<RoomsListResult> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString());
 
-  getRoom(roomId: string): Observable<Room> {
-    return this.http
-      .get<{ status: string; data: { room: Room } }>(`${this.API}/${roomId}`)
-      .pipe(map((res) => res.data.room));
+    if (search.trim()) {
+      params = params.set('search', search.trim());
+    }
+
+    if (filter === 'public') {
+      params = params.set('privacyType', 'public');
+    }
+
+    if (filter === 'private') {
+      params = params.set(
+        'privacyType[in]',
+        'private_request,private_password',
+      );
+    }
+
+    if (filter === 'my' && userId) {
+      params = params.set('members.user', userId);
+    }
+
+    return this.http.get<RoomsResponse>(this.api, { params }).pipe(
+      map((response) => ({
+        items: response.data.rooms,
+        meta: response.meta,
+        data: {
+          rooms: response.data.rooms,
+        },
+        page: response.meta.page,
+        totalPages: response.meta.totalPages,
+        totalResults: response.meta.total,
+        hasNext: response.meta.hasNext,
+        hasPrev: response.meta.hasPrev,
+      })),
+    );
   }
 
-  /** Returns owner + all members as a flat RoomMember array */
-  getRoomMembers(roomId: string): Observable<RoomMember[]> {
+  getRoom(roomId: string): Observable<Room> {
+    return this.http.get<RoomResponse>(`${this.api}/${roomId}`).pipe(
+      map((response) => response.data.room),
+    );
+  }
+
+  createRoom(data: FormData) {
+    return this.http.post(this.api, data);
+  }
+
+  updateRoom(roomId: string, data: FormData) {
+    return this.http.patch(`${this.api}/${roomId}`, data);
+  }
+
+  getRoomMembers(roomId: string): Observable<UserPreview[]> {
     return this.http
-      .get<{
-        status: string;
-        data: {
-          owner: RoomMember;
-          members: { _id: string; user: RoomMember; joinedAt: string }[];
-        };
-      }>(`${this.API}/${roomId}/members`)
+      .get<RoomMembersResponse>(`${this.api}/${roomId}/members`)
       .pipe(
-        map((res) => [res.data.owner, ...res.data.members.map((m) => m.user)])
+        map((response) => [
+          response.data.owner,
+          ...response.data.members.map((member) => member.user),
+        ]),
       );
   }
 
-  getPendingMembers(roomId: string): Observable<RoomMember[]> {
+  getPendingMembers(roomId: string): Observable<UserPreview[]> {
     return this.http
-      .get<{ status: string; data: { pendingMembers: { user: RoomMember }[] } }>(
-        `${this.API}/${roomId}/pending`
+      .get<PendingMembersResponse>(`${this.api}/${roomId}/pending`)
+      .pipe(
+        map((response) =>
+          response.data.pendingMembers.map((member) => member.user),
+        ),
+      );
+  }
+
+  joinRoom(roomId: string, password?: string): Observable<RoomJoinResult> {
+    return this.http
+      .post<JoinRoomResponse>(`${this.api}/${roomId}/join`, {
+        ...(password ? { password } : {}),
+      })
+      .pipe(
+        map((response) => ({
+          message: response.message,
+          room: response.data.room,
+        })),
+      );
+  }
+
+  approveMember(roomId: string, userId: string): Observable<Room | null> {
+    return this.http
+      .patch<RoomMutationResponse>(
+        `${this.api}/${roomId}/members/${userId}/approve`,
+        {},
       )
-      .pipe(map((res) => res.data.pendingMembers.map((m) => m.user)));
+      .pipe(map((response) => response.data.room ?? null));
   }
 
-  kickMember(roomId: string, userId: string): Observable<void> {
-    return this.http.delete<void>(`${this.API}/${roomId}/members/${userId}`);
+  rejectMember(roomId: string, userId: string): Observable<Room | null> {
+    return this.http
+      .patch<RoomMutationResponse>(
+        `${this.api}/${roomId}/members/${userId}/reject`,
+        {},
+      )
+      .pipe(map((response) => response.data.room ?? null));
   }
 
-  approveMember(roomId: string, userId: string): Observable<void> {
-    return this.http.patch<void>(`${this.API}/${roomId}/members/${userId}/approve`, {});
+  removeMember(roomId: string, userId: string): Observable<Room | null> {
+    return this.http
+      .delete<RoomMutationResponse>(`${this.api}/${roomId}/members/${userId}`)
+      .pipe(map((response) => response.data.room ?? null));
   }
 
-  /** Reject a pending join request */
-  rejectMember(roomId: string, userId: string): Observable<void> {
-    return this.http.delete<void>(`${this.API}/${roomId}/pending/${userId}`);
+  kickMember(roomId: string, userId: string): Observable<Room | null> {
+    return this.removeMember(roomId, userId);
   }
 
-  leaveRoom(roomId: string): Observable<void> {
-    return this.http.delete<void>(`${this.API}/${roomId}/members/me`);
+  leaveRoom(roomId: string, userId?: string): Observable<Room | null> {
+    return this.removeMember(roomId, userId ?? 'me');
   }
 
-  /** Checks whether the current user is a member of the given room */
-  isMember(roomId: string): Observable<boolean> {
-    return this.getRoomMembers(roomId).pipe(map(() => true));
-import { environment } from '../../../environment';
-import { Room, ApiResponse } from '../models/room.model';
-import { Observable } from 'rxjs';
+  isJoinedRoom(room: Room, userId: string | null | undefined): boolean {
+    if (!userId) {
+      return false;
+    }
 
-@Injectable({
-  providedIn: 'root'
-})
-export class RoomService {
-  private baseUrl = environment.apiUrl + '/rooms';
+    if (room.createdBy._id === userId) {
+      return true;
+    }
 
-  constructor(private http: HttpClient) {}
-
-  getRooms(params?: {
-    page?: number;
-    limit?: number;
-    search?: string;
-    type?: 'public' | 'private';
-    favourites?: boolean;
-  }): Observable<ApiResponse<Room[]>> {
-    return this.http.get<ApiResponse<Room[]>>(this.baseUrl, { params: params as any });
+    return room.members.some((member) => member.user._id === userId);
   }
 
-
-  joinRoom(roomId: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/${roomId}/join`, {});
+  requiresPassword(room: Room): boolean {
+    return room.privacyType === 'private_password';
   }
 
-  getMembers(roomId: string): Observable<ApiResponse<any>> {
-    return this.http.get<ApiResponse<any>>(`${this.baseUrl}/${roomId}/members`);
+  requiresApproval(room: Room): boolean {
+    return room.privacyType === 'private_request';
   }
 
-  getPending(roomId: string): Observable<ApiResponse<any>> {
-    return this.http.get<ApiResponse<any>>(`${this.baseUrl}/${roomId}/pending`);
-  }
-
-  approveMember(roomId: string, userId: string): Observable<any> {
-    return this.http.patch(`${this.baseUrl}/${roomId}/members/${userId}/approve`, {});
-  }
-
-  rejectMember(roomId: string, userId: string): Observable<any> {
-    return this.http.get(`${this.baseUrl}/${roomId}/members/${userId}/reject`);
-  }
-
-
-  removeMember(roomId: string, userId: string): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/${roomId}/members/${userId}`);
+  privacyLabel(privacyType: RoomPrivacy): string {
+    switch (privacyType) {
+      case 'private_request':
+        return 'Approval required';
+      case 'private_password':
+        return 'Password protected';
+      default:
+        return 'Open room';
+    }
   }
 }

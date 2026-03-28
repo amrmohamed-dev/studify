@@ -1,0 +1,37 @@
+<section class="app-page request-page">
+  <article class="request-page__card panel-surface">
+    <span class="eyebrow">{{ rejected ? 'Request declined' : 'Request sent' }}</span>
+
+    <h1>
+      @if (rejected) {
+        Access to {{ roomName }} was not approved.
+      } @else {
+        Waiting for approval to join {{ roomName }}.
+      }
+    </h1>
+
+    <p>
+      @if (rejected) {
+        You can browse other study spaces right away or ask the room owner for a
+        fresh invite.
+      } @else {
+        Keep this page open. Once the room owner approves you, we will move you
+        into the room automatically.
+      }
+    </p>
+
+    <div class="request-page__status">
+      <span class="status-pill">
+        {{ (connected$ | async) ? 'Realtime updates connected' : 'Reconnecting to realtime updates' }}
+      </span>
+      @if (roomId) {
+        <span class="request-page__room-id">Room: {{ roomId }}</span>
+      }
+    </div>
+
+    <div class="request-page__actions">
+      <a class="btn-primary" routerLink="/rooms">Back to rooms</a>
+      <a class="btn-ghost" routerLink="/notification">Open notifications</a>
+    </div>
+  </article>
+</section>

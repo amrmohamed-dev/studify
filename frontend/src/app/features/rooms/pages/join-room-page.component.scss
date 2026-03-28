@@ -1,0 +1,79 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.join-page__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 520px);
+  gap: $space-7;
+  align-items: start;
+}
+
+.join-page__copy,
+.join-page__preview {
+  display: grid;
+}
+
+.join-page__copy {
+  gap: $space-4;
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2rem, 5vw, 3.3rem);
+    line-height: 1.02;
+  }
+
+  p {
+    max-width: 56ch;
+    margin: 0;
+    color: $text-muted-color;
+  }
+}
+
+.join-page__card {
+  padding: clamp(24px, 4vw, 32px);
+}
+
+.join-page__room-row,
+.join-page__actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: $space-3;
+}
+
+.join-page__preview {
+  gap: $space-3;
+  padding: $space-5;
+  border-radius: $radius-lg;
+  background: $surface-muted-color;
+
+  h2 {
+    margin: $space-3 0 $space-2;
+  }
+
+  p {
+    margin: 0;
+    color: $text-muted-color;
+  }
+}
+
+.join-page__notice {
+  margin: 0;
+  padding: $space-3 $space-4;
+  border-radius: $radius-md;
+  background: rgba($secondary-color, 0.12);
+  color: $warning-color;
+  font-weight: $weight-semibold;
+}
+
+@include respond-down(md) {
+  .join-page__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@include respond-down(sm) {
+  .join-page__room-row,
+  .join-page__actions {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,3 +1,5 @@
+@use 'variables' as *;
+
 :host {
   display: block;
 }
@@ -9,5 +11,5 @@
 .app-content {
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 24px 0 12px;
+  padding: $space-6 0 $space-3;
 }

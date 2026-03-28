@@ -1,0 +1,74 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.notification-page,
+.notification-list,
+.notification-item__content {
+  display: grid;
+}
+
+.notification-page {
+  gap: $space-6;
+}
+
+.notification-list {
+  gap: $space-3;
+}
+
+.notification-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: $space-4;
+  text-align: left;
+  cursor: pointer;
+  @include card-style($padding: $space-5, $radius: $radius-lg, $shadow: $shadow-card);
+  @include transition((transform, box-shadow, border-color, background-color));
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-soft;
+  }
+}
+
+.notification-item--unread {
+  border-color: rgba($primary-color, 0.18);
+  background: rgba($primary-color, 0.05);
+}
+
+.notification-item__status {
+  width: 12px;
+  height: 12px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: $secondary-color;
+}
+
+.notification-item:not(.notification-item--unread) .notification-item__status {
+  background: rgba($primary-color, 0.18);
+}
+
+.notification-item__content {
+  gap: $space-2;
+}
+
+.notification-item__type {
+  width: fit-content;
+  padding: $space-1 $space-2;
+  border-radius: $radius-pill;
+  background: $surface-muted-color;
+  color: $primary-color;
+  font-size: $text-xs;
+  font-weight: $weight-black;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.notification-item strong {
+  font-size: $text-base;
+}
+
+.notification-item__time {
+  color: $text-muted-color;
+  font-size: $text-sm;
+}

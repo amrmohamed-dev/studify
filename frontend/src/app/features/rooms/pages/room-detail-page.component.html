@@ -1,0 +1,199 @@
+<section class="app-page room-page">
+  @if (loading) {
+    <app-state-card
+      kind="loading"
+      title="Loading room workspace"
+      message="We are syncing members, tasks, chat, and study sessions for this room."
+    ></app-state-card>
+  } @else if (errorState === 'invalid') {
+    <app-state-card
+      kind="error"
+      title="This room is unavailable"
+      [message]="errorMessage"
+      actionLabel="Back to rooms"
+      actionLink="/rooms"
+    ></app-state-card>
+  } @else if (errorState === 'unauthorized') {
+    <app-state-card
+      kind="error"
+      title="You are not in this room yet"
+      [message]="errorMessage"
+    >
+      <a class="btn-primary" [routerLink]="['/rooms/join']" [queryParams]="{ room: roomId }">
+        Request or join access
+      </a>
+    </app-state-card>
+  } @else if (room) {
+    <div class="room-page__header">
+      <div>
+        <a class="room-page__back" routerLink="/rooms">Back to rooms</a>
+        <h1>{{ room.name }}</h1>
+        <p>
+          Hosted by {{ room.createdBy.name }} · {{ members.length }} members ·
+          {{ roomService.privacyLabel(room.privacyType) }}
+        </p>
+      </div>
+
+      <div class="room-page__header-actions">
+        <span class="status-pill">
+          {{ activeSession ? sessionLabel : 'Room active' }}
+        </span>
+        @if (isOwner) {
+          <a class="btn-ghost" routerLink="/rooms">Back to rooms</a>
+        } @else {
+          <button class="btn-danger" type="button" (click)="leaveRoom()">
+            Leave room
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (banner) {
+      <div class="room-banner" [class]="'room-banner room-banner--' + banner.tone">
+        {{ banner.message }}
+      </div>
+    }
+
+    <div class="room-shell">
+      <aside class="room-shell__tasks panel-surface">
+        <app-task [roomId]="roomId" [userId]="currentUserId"></app-task>
+      </aside>
+
+      <main class="room-shell__main">
+        <section class="room-summary panel-surface">
+          <div class="room-summary__top">
+            <div>
+              <span class="eyebrow">Realtime room</span>
+              <h2>{{ room.name }}</h2>
+            </div>
+
+            <div class="room-summary__stats">
+              <span class="badge">{{ members.length }}</span>
+              <span class="badge">{{ room.maxMembers }} max</span>
+            </div>
+          </div>
+
+          <div class="room-summary__session">
+            <div>
+              <span class="room-summary__label">Study session</span>
+              <strong>{{ activeSession ? sessionCountdown : 'Not running' }}</strong>
+              <p>
+                @if (activeSession) {
+                  Cycle {{ activeSession.cycle }} · ends
+                  {{ activeSession.endsAt | date: 'shortTime' }}
+                } @else {
+                  Start a focus or break session to keep everyone in sync.
+                }
+              </p>
+            </div>
+
+            <div class="room-summary__presets">
+              @for (preset of sessionPresets; track preset.label) {
+                <button
+                  class="btn-ghost"
+                  type="button"
+                  [disabled]="!!activeSession"
+                  (click)="startSession(preset.type, preset.duration)"
+                >
+                  {{ preset.label }}
+                </button>
+              }
+
+              <button
+                class="btn-secondary"
+                type="button"
+                [disabled]="!activeSession"
+                (click)="endSession()"
+              >
+                End current
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="room-members panel-surface">
+          <div class="room-members__header">
+            <div>
+              <h3>Members</h3>
+              <p>See who is currently inside the room and manage requests.</p>
+            </div>
+          </div>
+
+          <div class="room-members__list">
+            @for (member of members; track member._id) {
+              <article class="member-card">
+                <div class="member-card__avatar">
+                  @if (member.image?.url) {
+                    <img [src]="member.image?.url" [alt]="member.name" />
+                  } @else {
+                    <span>{{ memberInitials(member.name) }}</span>
+                  }
+                </div>
+
+                <div class="member-card__content">
+                  <strong>{{ member.name }}</strong>
+                  <span>
+                    @if (member._id === room.createdBy._id) {
+                      Owner
+                    } @else if (member._id === currentUserId) {
+                      You
+                    } @else {
+                      Member
+                    }
+                  </span>
+                </div>
+
+                @if (isOwner && member._id !== room.createdBy._id && member._id !== currentUserId) {
+                  <button class="btn-ghost" type="button" (click)="kickMember(member._id)">
+                    Remove
+                  </button>
+                }
+              </article>
+            }
+          </div>
+
+          @if (isOwner && pendingMembers.length) {
+            <div class="room-members__pending">
+              <div class="room-members__pending-head">
+                <h4>Pending requests</h4>
+                <span class="badge">{{ pendingMembers.length }}</span>
+              </div>
+
+              <div class="room-members__list">
+                @for (member of pendingMembers; track member._id) {
+                  <article class="member-card member-card--pending">
+                    <div class="member-card__avatar">
+                      @if (member.image?.url) {
+                        <img [src]="member.image?.url" [alt]="member.name" />
+                      } @else {
+                        <span>{{ memberInitials(member.name) }}</span>
+                      }
+                    </div>
+
+                    <div class="member-card__content">
+                      <strong>{{ member.name }}</strong>
+                      <span>Waiting for approval</span>
+                    </div>
+
+                    <div class="member-card__actions">
+                      <button class="btn-primary" type="button" (click)="approveMember(member._id)">
+                        Approve
+                      </button>
+                      <button class="btn-ghost" type="button" (click)="rejectMember(member._id)">
+                        Reject
+                      </button>
+                    </div>
+                  </article>
+                }
+              </div>
+            </div>
+          }
+        </section>
+      </main>
+
+      <aside class="room-shell__chat panel-surface">
+        <app-chat [roomId]="roomId" [userId]="currentUserId"></app-chat>
+      </aside>
+    </div>
+  }
+</section>

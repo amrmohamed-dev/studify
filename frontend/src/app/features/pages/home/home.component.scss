@@ -1,128 +1,211 @@
-.stats-grid {
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.home-wrapper {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
+  gap: $space-7;
+  padding: $space-2 0 $space-8;
+}
+
+.stats-grid,
+.rooms-grid,
+.loading-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: $space-5;
 }
 
 .stat-card {
-  background: #F0F3FF;
-  border: 1px solid rgba(193, 199, 210, 0.1);
-  border-radius: 32px;
-  padding: 32px;
-  display: flex;
-  flex-direction: row;
+  @include card-style($padding: $space-6, $radius: $radius-xl, $background: $bg-elevated-color, $shadow: $shadow-soft);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: $space-4;
   align-items: center;
-  gap: 16px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-  }
+  @include card-hover(-2px, $shadow-card);
 }
+
 .stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 0.25rem;
+  width: 52px;
+  height: 52px;
+  border-radius: $radius-lg;
+  @include flex-center;
+}
 
-  &.tasks-icon {
-    background: #fff4e5;
-    color: #f59e0b;
-  }
+.tasks-icon {
+  background: rgba($secondary-color, 0.14);
+  color: $warning-color;
+}
 
-  &.hours-icon {
-    background: #e8f0fe;
-    color: #3b82f6;
-  }
+.hours-icon {
+  background: rgba($info-color, 0.12);
+  color: $info-color;
+}
+
+.stat-info {
+  display: grid;
+  gap: $space-1;
 }
 
 .stat-label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #9ca3af;
-  text-transform: uppercase;
+  font-size: $text-xs;
+  font-weight: $weight-bold;
   letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $text-muted-color;
 }
 
 .stat-value {
-  font-size: 2.2rem;
-  font-weight: 700;
-  color: #111827;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: $weight-black;
+  color: $text-color;
   line-height: 1;
 }
 
 .stat-sub {
-  font-size: 0.8rem;
-  color: #6b7280;
+  grid-column: 1 / -1;
   display: flex;
-  gap: 0.5rem;
   flex-wrap: wrap;
-}
-.rooms-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.25rem;
+  gap: $space-2;
+  color: $text-muted-color;
+  font-size: $text-sm;
 }
 
-.loading-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.25rem;
+.hero-section {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(28px, 5vw, 48px);
+  border-radius: $radius-xl;
+  background:
+    radial-gradient(circle at top right, rgba($surface-color, 0.14), transparent 26%),
+    linear-gradient(135deg, rgba($primary-color, 0.96), rgba($secondary-color, 0.84));
+  box-shadow: $shadow-soft;
 }
+
+.hero-title {
+  margin: 0;
+  font-size: clamp(2.4rem, 5vw, 4.2rem);
+  line-height: 0.98;
+  color: $on-primary-color;
+}
+
+.hero-subtitle {
+  max-width: 54ch;
+  margin: $space-3 0 0;
+  color: rgba($surface-color, 0.86);
+  font-size: $text-lg;
+}
+
+.rooms-section {
+  display: grid;
+  gap: $space-5;
+}
+
+.rooms-header {
+  @include flex-center(row, space-between, flex-end, $space-4);
+}
+
+.section-title,
+.room-name {
+  margin: 0;
+}
+
+.section-title {
+  font-size: clamp(1.45rem, 3vw, 2rem);
+}
+
+.rooms-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-3;
+}
+
+.btn-enter,
+.btn-join,
+.btn-view-all {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+}
+
+.btn-enter,
+.btn-join {
+  @include button-style(primary);
+}
+
 .btn-enter {
   width: 100%;
-  height: 48px;
-  padding: 12px 0;
-  border-radius: 32px;
-  border: none;
-  background: #00467C;
-  color: #fff;
-  font-size: 0.875rem;
-  font-weight: 500;
-  gap: 8px;
-  cursor: pointer;
-  transition: opacity 0.2s;
-
-  &:hover {
-    opacity: 0.85;
-  }
 }
-.btn-join {
-  width: auto;
-  height: 56px;
-  padding: 16px 32px;
-  border-radius: 32px;
-  border: none;
-  background: #005EA4;
-  color: #fff;
-  font-size: 0.875rem;
-  font-weight: 500;
-  gap: 12px;
-  cursor: pointer;
-  transition: opacity 0.2s;
 
-  &:hover {
-    opacity: 0.85;
-  }
-}
 .btn-view-all {
-  height: 48px;
-  padding: 12px 24px;
-  border-radius: 32px;
-  border: 2px solid #00467C;
-  background: transparent;
-  color: #00467C;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
+  @include button-style(outline);
+}
 
-  &:hover {
-    background: #00467C;
-    color: #fff;
+.room-card {
+  overflow: hidden;
+  display: grid;
+  gap: 0;
+  @include card-style($padding: $space-0, $radius: $radius-xl, $shadow: $shadow-soft);
+  @include card-hover(-3px, $shadow-card);
+}
+
+.room-image-wrapper {
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(135deg, rgba($primary-color, 0.9), rgba($secondary-color, 0.7));
+}
+
+.room-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.room-info {
+  display: grid;
+  gap: $space-4;
+  padding: $space-5;
+}
+
+.room-name {
+  font-size: $text-lg;
+}
+
+.no-rooms {
+  @include card-style($padding: $space-6, $radius: $radius-xl, $shadow: $shadow-soft);
+  display: grid;
+  justify-items: center;
+  gap: $space-4;
+  text-align: center;
+  color: $text-muted-color;
+}
+
+.skeleton-card {
+  min-height: 280px;
+  border-radius: $radius-xl;
+  background:
+    linear-gradient(
+      90deg,
+      rgba($primary-color, 0.05) 0%,
+      rgba($primary-color, 0.12) 50%,
+      rgba($primary-color, 0.05) 100%
+    );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@include respond-down(md) {
+  .rooms-header {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

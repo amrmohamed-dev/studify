@@ -10,16 +10,16 @@ export const roomGuard: CanActivateFn = (route, state) => {
   const roomId = route.paramMap.get('roomId');
 
   if (!roomId) {
-    router.navigate(['/home']);
+    router.navigate(['/rooms']);
     return false;
   }
 
-  return roomService.getRoomMembers(roomId).pipe(
+  return roomService.getRoom(roomId).pipe(
     map(() => {
       return true;
     }),
     catchError(() => {
-      router.navigate(['/home']);
+      router.navigate(['/rooms']);
       return of(false);
     })
   );

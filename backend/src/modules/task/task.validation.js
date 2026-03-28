@@ -13,7 +13,7 @@ export const taskValidation = Joi.object({
     }),
 
   room: Joi.string()
-    .required()
+    .optional()
     .custom((value, helpers) => {
       if (!mongoose.Types.ObjectId.isValid(value)) {
         return helpers.message("Room must be a valid ObjectId");
@@ -22,7 +22,7 @@ export const taskValidation = Joi.object({
     }),
 
   createdBy: Joi.string()
-    .required()
+    .optional()
     .custom((value, helpers) => {
       if (!mongoose.Types.ObjectId.isValid(value)) {
         return helpers.message("CreatedBy must be a valid ObjectId");

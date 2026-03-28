@@ -1,21 +1,32 @@
-<div class="room-card page-card">
-  <div class="room-image">
-    <img
-      [src]="room.image || 'assets/images/room-placeholder.jpg'"
-      alt="room"
-    />
-   <span class="room-type" [class.private]="room.status === 'private'">
-  {{ room.status === 'private' ? 'Private' : 'Public' }}
-</span>
+<article class="room-card">
+  <div class="room-card__hero">
+    @if (room.image?.url) {
+      <img [src]="room.image?.url" [alt]="room.name" />
+    } @else {
+      <div class="room-card__placeholder">
+        <span>{{ room.name.charAt(0) }}</span>
+      </div>
+    }
+
+    <span class="room-card__privacy">{{ privacyLabel }}</span>
   </div>
 
-  <div class="room-content">
-    <h3 class="room-title">{{ room.name }}</h3>
+  <div class="room-card__content">
+    <div class="room-card__copy">
+      <h3>{{ room.name }}</h3>
+      <p>
+        Hosted by {{ room.createdBy.name }}. {{ memberCount }} members can study
+        together here.
+      </p>
+    </div>
 
-    <p class="room-members">
-      👥 {{ room.membersCount }} members
-    </p>
+    <div class="room-card__meta">
+      <span class="room-card__stat">{{ memberCount }} active seats</span>
+      <span class="room-card__stat">Cap {{ room.maxMembers }}</span>
+    </div>
 
-   <button class="btn-primary join-btn" (click)="onJoinRoom()">Join Room</button>
+    <button class="btn-primary room-card__action" (click)="onPrimaryAction()">
+      {{ actionLabel }}
+    </button>
   </div>
-</div>
+</article>

@@ -1,0 +1,112 @@
+<section class="app-page rooms-page">
+  <div class="page-head">
+    <div>
+      <span class="eyebrow">Rooms</span>
+      <h1>Find the right space to focus together.</h1>
+      <p>
+        Browse public rooms, jump back into your own study spaces, or request
+        access to private groups without leaving the flow.
+      </p>
+    </div>
+
+    <a class="btn-primary" routerLink="/rooms/join">Join with room ID</a>
+  </div>
+
+  <section class="rooms-toolbar panel-surface">
+    <div class="rooms-toolbar__search">
+      <label for="room-search">Search rooms</label>
+      <input
+        id="room-search"
+        class="input-field"
+        type="search"
+        [(ngModel)]="searchQuery"
+        placeholder="Search by room name"
+        (input)="onSearch()"
+      />
+    </div>
+
+    <div class="rooms-toolbar__stats">
+      <strong>{{ totalResults }}</strong>
+      <span>matching rooms</span>
+    </div>
+  </section>
+
+  <div class="rooms-filters">
+    <button
+      type="button"
+      [class.active]="activeFilter === 'all'"
+      (click)="setFilter('all')"
+    >
+      All rooms
+    </button>
+    <button
+      type="button"
+      [class.active]="activeFilter === 'my'"
+      (click)="setFilter('my')"
+    >
+      My rooms
+    </button>
+    <button
+      type="button"
+      [class.active]="activeFilter === 'public'"
+      (click)="setFilter('public')"
+    >
+      Public
+    </button>
+    <button
+      type="button"
+      [class.active]="activeFilter === 'private'"
+      (click)="setFilter('private')"
+    >
+      Private
+    </button>
+  </div>
+
+  @if (loading) {
+    <app-state-card
+      kind="loading"
+      title="Loading rooms"
+      message="We are fetching the latest public and private study spaces."
+    ></app-state-card>
+  } @else if (errorMessage) {
+    <app-state-card
+      kind="error"
+      title="Rooms are unavailable"
+      [message]="errorMessage"
+    >
+      <button class="btn-primary" type="button" (click)="refresh()">
+        Try again
+      </button>
+    </app-state-card>
+  } @else if (!rooms.length) {
+    <app-state-card
+      kind="empty"
+      title="No rooms matched this view"
+      message="Try another filter, clear the search, or join a room directly with an ID."
+      actionLabel="Join a room"
+      actionLink="/rooms/join"
+    ></app-state-card>
+  } @else {
+    <div class="rooms-grid">
+      @for (room of rooms; track trackRoom($index, room)) {
+        <app-room-card
+          [room]="room"
+          [currentUserId]="currentUserId"
+          (joinRoom)="openJoin($event)"
+          (requestInvite)="openJoin($event)"
+          (viewRoom)="openRoom($event)"
+        ></app-room-card>
+      }
+    </div>
+
+    <div class="rooms-pagination">
+      <button class="btn-ghost" type="button" [disabled]="!hasPrev" (click)="previousPage()">
+        Previous
+      </button>
+      <span>Page {{ page }} of {{ totalPages }}</span>
+      <button class="btn-ghost" type="button" [disabled]="!hasNext" (click)="nextPage()">
+        Next
+      </button>
+    </div>
+  }
+</section>

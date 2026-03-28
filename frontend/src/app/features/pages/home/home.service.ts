@@ -1,49 +1,61 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 export interface TaskStats {
-  totalTasks: number;
   completedTasks: number;
-  pendingTasks: number;
 }
 
 export interface SessionStats {
   totalHours: number;
-  weeklyHours: number;
+  percentageChange: number;
 }
 
-export interface Room {
+interface TaskStatsEntry {
   _id: string;
-  name: string;
-  image: {
-    url: string | null;
-    publicId: string | null;
+  completedTasks: number;
+}
+
+interface TaskStatsResponse {
+  status: string;
+  data: {
+    completedTasks: TaskStatsEntry[];
   };
 }
 
-export interface RoomsResponse {
+interface SessionStatsResponse {
+  status: string;
   data: {
-    rooms: Room[];
+    stats: SessionStats;
   };
 }
 
 @Injectable({ providedIn: 'root' })
 export class HomeService {
-  private http = inject(HttpClient);
-  private baseUrl = '/api/v1';
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = '/api/v1';
 
   getTaskStats(): Observable<TaskStats> {
-    return this.http.get<TaskStats>(`${this.baseUrl}/tasks/stats/me`);
+    return this.http
+      .get<TaskStatsResponse>(`${this.baseUrl}/tasks/stats/me`)
+      .pipe(
+        map((response) => ({
+          completedTasks: response.data.completedTasks.reduce(
+            (total, entry) => total + (entry.completedTasks || 0),
+            0,
+          ),
+        })),
+      );
   }
 
   getSessionStats(): Observable<SessionStats> {
-    return this.http.get<SessionStats>(`${this.baseUrl}/sessions/stats/me`);
-  }
-
-  getMyRooms(userId: string): Observable<RoomsResponse> {
-    return this.http.get<RoomsResponse>(
-      `${this.baseUrl}/rooms?members=${userId}&limit=6`
-    );
+    return this.http
+      .get<SessionStatsResponse>(`${this.baseUrl}/sessions/stats/me`)
+      .pipe(
+        map((response) => ({
+          totalHours: response.data.stats.totalHours || 0,
+          percentageChange: response.data.stats.percentageChange || 0,
+        })),
+      );
   }
 }

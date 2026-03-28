@@ -1,6 +1,6 @@
 <nav class="navbar">
   <div class="nav-left">
-    <a class="logo" routerLink="/home">
+    <a class="logo" routerLink="/home" aria-label="Studify home">
       <img src="assets/logo.png" alt="Studify" />
     </a>
 
@@ -19,32 +19,64 @@
       </a>
     </div>
 
-    <button class="menu-btn" type="button" (click)="toggleMenu()">☰</button>
+    <button class="menu-btn" type="button" (click)="toggleMenu()">Menu</button>
   </div>
 
   <div class="nav-right" (click)="stopDropdownClose($event)">
     @if (auth.loading$ | async) {
-      <div class="auth-loading"></div>
+      <div class="auth-loading">Syncing account...</div>
     } @else {
       @if (user$ | async; as user) {
         <div class="notif-wrapper">
-          <button class="icon-btn" (click)="toggleNotif()">🔔</button>
+          <button class="icon-btn" type="button" (click)="toggleNotif()">
+            <lucide-icon [img]="icons.bell"></lucide-icon>
+            @if (unreadCount > 0) {
+              <span class="notif-badge">{{ unreadCount }}</span>
+            }
+          </button>
 
           @if (showNotif) {
             <div class="dropdown-panel notif-dropdown">
-              <p class="dropdown-title">Notifications</p>
+              <div class="dropdown-header">
+                <div>
+                  <p class="dropdown-title">Notifications</p>
+                  <span class="dropdown-subtitle">
+                    {{ unreadCount }} unread update{{ unreadCount === 1 ? '' : 's' }}
+                  </span>
+                </div>
+                <a routerLink="/notification" class="view-all">View all</a>
+              </div>
 
-              @for (n of notifications; track n._id) {
-                <div class="notif-item">{{ n.message }}</div>
+              @if (notifications.length) {
+                <div class="notif-list">
+                  @for (notification of notifications; track notification._id) {
+                    <button
+                      class="notif-item"
+                      [class.notif-item--unread]="!notification.isRead"
+                      type="button"
+                      (click)="openNotification(notification)"
+                    >
+                      <span class="notif-item__message">
+                        {{ notification.message || 'New activity in Studify.' }}
+                      </span>
+                      <span class="notif-item__time">
+                        {{ notification.createdAt | date: 'short' }}
+                      </span>
+                    </button>
+                  }
+                </div>
+              } @else {
+                <p class="dropdown-empty">
+                  Room approvals, friend updates, and session alerts will show up
+                  here.
+                </p>
               }
-
-              <a routerLink="/notifications" class="view-all">View All</a>
             </div>
           }
         </div>
 
         <div class="user-wrapper">
-          <button class="avatar-btn" (click)="toggleUser()">
+          <button class="avatar-btn" type="button" (click)="toggleUser()">
             <span class="avatar-text">{{ getInitials(user.name) }}</span>
           </button>
 
@@ -54,7 +86,7 @@
                 <lucide-icon [img]="icons.settings"></lucide-icon>
                 <span>Settings</span>
               </a>
-              <button (click)="logout()">
+              <button type="button" (click)="logout()">
                 <lucide-icon [img]="icons.logout"></lucide-icon>
                 Logout
               </button>
@@ -64,7 +96,7 @@
       } @else {
         <div class="auth-buttons">
           <a routerLink="/login" class="btn-link">Login</a>
-          <a routerLink="/register" class="btn-primary">Create Account</a>
+          <a routerLink="/register" class="btn-primary">Create account</a>
         </div>
       }
     }
@@ -88,40 +120,41 @@
     <lucide-icon [img]="icons.friends"></lucide-icon>
     <span>Friends</span>
   </a>
+  <a routerLink="/notification" routerLinkActive="active" (click)="closeMenu()">
+    <lucide-icon [img]="icons.bell"></lucide-icon>
+    <span>Notifications</span>
+  </a>
 
   <div class="sidebar-bottom">
-    @if (auth.loading$ | async) {
-      <div class="auth-loading"></div>
+    @if (user$ | async; as user) {
+      <a routerLink="/settings" routerLinkActive="active" (click)="closeMenu()">
+        <lucide-icon [img]="icons.settings"></lucide-icon>
+        <span>Settings</span>
+      </a>
+
+      <span class="menu-divider"></span>
+
+      <div class="sidebar-user">
+        <span class="sidebar-user__avatar">{{ getInitials(user.name) }}</span>
+        <div>
+          <strong>{{ user.name }}</strong>
+          <small>{{ user.email }}</small>
+        </div>
+      </div>
+
+      <button type="button" (click)="logout()">
+        <lucide-icon [img]="icons.logout"></lucide-icon>
+        Logout
+      </button>
     } @else {
-      @if (user$ | async; as user) {
-        <a
-          routerLink="/settings"
-          routerLinkActive="active"
-          (click)="closeMenu()"
-        >
-          <lucide-icon [img]="icons.settings"></lucide-icon>
-          <span>Settings</span>
-        </a>
+      <span class="menu-divider"></span>
 
-        <span class="menu-divider"></span>
-
-        <button (click)="logout()">
-          <lucide-icon [img]="icons.logout"></lucide-icon>
-          Logout
-        </button>
-      } @else {
-        <span class="menu-divider"></span>
-
-        <a routerLink="/login" routerLinkActive="active" (click)="closeMenu()"
-          >Login</a
-        >
-        <a
-          routerLink="/register"
-          routerLinkActive="active"
-          (click)="closeMenu()"
-          >Create Account</a
-        >
-      }
+      <a routerLink="/login" routerLinkActive="active" (click)="closeMenu()">
+        Login
+      </a>
+      <a routerLink="/register" routerLinkActive="active" (click)="closeMenu()">
+        Create account
+      </a>
     }
   </div>
 </div>

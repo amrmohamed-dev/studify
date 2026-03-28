@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
@@ -9,7 +9,7 @@ import { FooterComponent } from '../../shared/components/footer/footer.component
 @Component({
   selector: 'app-join-room',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule , NavbarComponent , FooterComponent],
+  imports: [ReactiveFormsModule, RouterModule, NavbarComponent, FooterComponent],
   templateUrl: './join-room.component.html',
   styleUrls: ['./join-room.component.scss'],
 })

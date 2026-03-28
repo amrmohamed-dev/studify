@@ -12,6 +12,7 @@ import messageRouter from './src/modules/message/message.route.js';
 import notificationRouter from './src/modules/notification/notification.route.js';
 import friendshipRouter from './src/modules/friendship/friendship.route.js';
 import roomRouter from './src/modules/room/room.route.js';
+import sessionRouter from './src/modules/session/session.route.js';
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use('/api/v1', messageRouter);
 app.use('/api/v1/notifications', notificationRouter);
 app.use('/api/v1/friends', friendshipRouter);
 app.use('/api/v1/rooms', roomRouter);
+app.use('/api/v1/sessions', sessionRouter);
 
 const angularDistPath = path.join(
   process.cwd(),

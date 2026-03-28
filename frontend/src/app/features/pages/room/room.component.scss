@@ -164,8 +164,8 @@
 // ─── Timer Circle ──────────────────────────────────────────────────────────────
 .timer-circle {
   position: relative;
-  width: 164px;
-  height: 164px;
+  width: 200px;
+  height: 2004px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -208,8 +208,8 @@
   justify-content: center;
   background: var(--color-surface);
   border-radius: 50%;
-  width: 136px;
-  height: 136px;
+  width: 150px;
+  height: 150px;
   box-shadow: var(--shadow-soft);
 }
 

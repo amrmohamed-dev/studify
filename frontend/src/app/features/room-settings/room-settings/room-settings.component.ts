@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { RoomService } from '../../services/room.service';
+import { RoomService } from '../../../core/services/room.service';
 
 interface RoomSettings {
   name: string;
@@ -17,13 +17,14 @@ interface RoomSettings {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './room-settings.component.html',
-  styleUrls: ['./room-settings.component.scss']
+  styleUrls: ['./room-settings.component.scss'],
 })
 export class RoomSettingsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private roomService = inject(RoomService);
 
+  mode: 'create' | 'edit' = 'create';
   roomId: string = '';
   isLoading = false;
   isFetching = false;
@@ -38,10 +39,12 @@ export class RoomSettingsComponent implements OnInit {
     maxMembers: 5,
     privacyType: 'public',
     password: '',
-    image: null
+    image: null,
   };
 
   ngOnInit(): void {
+    this.mode = this.route.snapshot.data['mode'];
+
     this.roomId = this.route.snapshot.paramMap.get('roomId') || '';
     if (this.roomId) {
       this.fetchRoom();
@@ -50,9 +53,9 @@ export class RoomSettingsComponent implements OnInit {
 
   fetchRoom(): void {
     this.isFetching = true;
-    this.roomService.getRoomById(this.roomId).subscribe({
+    this.roomService.getRoom(this.roomId).subscribe({
       next: (res: any) => {
-        const room = res.data?.room;
+        const room = res;
         if (room) {
           this.settings.name = room.name || '';
           this.settings.maxMembers = room.maxMembers || 5;
@@ -63,7 +66,7 @@ export class RoomSettingsComponent implements OnInit {
       },
       error: () => {
         this.isFetching = false;
-      }
+      },
     });
   }
 
@@ -97,7 +100,9 @@ export class RoomSettingsComponent implements OnInit {
     this.selectedFile = null;
   }
 
-  onPrivacyChange(type: 'public' | 'private_request' | 'private_password'): void {
+  onPrivacyChange(
+    type: 'public' | 'private_request' | 'private_password',
+  ): void {
     this.settings.privacyType = type;
     if (type !== 'private_password') {
       this.settings.password = '';
@@ -114,7 +119,10 @@ export class RoomSettingsComponent implements OnInit {
       return;
     }
 
-    if (this.settings.privacyType === 'private_password' && !this.settings.password) {
+    if (
+      this.settings.privacyType === 'private_password' &&
+      !this.settings.password
+    ) {
       this.errorMessage = 'Password is required for password-protected rooms.';
       return;
     }
@@ -128,7 +136,10 @@ export class RoomSettingsComponent implements OnInit {
     formData.append('maxMembers', this.settings.maxMembers.toString());
     formData.append('privacyType', this.settings.privacyType);
 
-    if (this.settings.privacyType === 'private_password' && this.settings.password) {
+    if (
+      this.settings.privacyType === 'private_password' &&
+      this.settings.password
+    ) {
       formData.append('password', this.settings.password);
     }
 
@@ -136,18 +147,36 @@ export class RoomSettingsComponent implements OnInit {
       formData.append('image', this.selectedFile);
     }
 
-    this.roomService.updateRoom(this.roomId, formData).subscribe({
-      next: () => {
-        this.isLoading = false;
-        this.successMessage = 'Room settings updated successfully!';
-        setTimeout(() => (this.successMessage = ''), 3500);
-      },
-      error: (err: any) => {
-        this.isLoading = false;
-        this.errorMessage =
-          err?.error?.message || 'Failed to update room settings. Please try again.';
-      }
-    });
+    if (this.mode === 'edit') {
+      this.roomService.updateRoom(this.roomId, formData).subscribe({
+        next: () => {
+          this.isLoading = false;
+          this.successMessage = 'Room settings updated successfully!';
+          setTimeout(() => (this.successMessage = ''), 3500);
+        },
+        error: (err: any) => {
+          this.isLoading = false;
+          this.errorMessage =
+            err?.error?.message ||
+            'Failed to update room settings. Please try again.';
+        },
+      });
+    }
+
+    if (this.mode === 'create') {
+      this.roomService.createRoom(formData).subscribe({
+        next: () => {
+          this.isLoading = false;
+          this.successMessage = 'Room created successfully!';
+          setTimeout(() => (this.successMessage = ''), 3500);
+        },
+        error: (err: any) => {
+          this.isLoading = false;
+          this.errorMessage =
+            err?.error?.message || 'Failed to create room. Please try again.';
+        },
+      });
+    }
   }
 
   goBack(): void {

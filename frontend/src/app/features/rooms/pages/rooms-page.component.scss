@@ -1,0 +1,83 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.rooms-page {
+  display: grid;
+  gap: $space-6;
+}
+
+.rooms-toolbar {
+  @include card-style($padding: $space-5, $radius: $radius-xl, $shadow: $shadow-soft);
+  @include flex-center(row, space-between, flex-end, $space-4);
+}
+
+.rooms-toolbar__search {
+  flex: 1;
+  display: grid;
+  gap: $space-2;
+
+  label {
+    font-size: 0.9rem;
+    font-weight: $weight-bold;
+  }
+}
+
+.rooms-toolbar__stats {
+  min-width: 140px;
+  display: grid;
+  gap: $space-1;
+  justify-items: end;
+
+  strong {
+    font-size: clamp(1.7rem, 3vw, 2.4rem);
+  }
+
+  span {
+    color: $text-muted-color;
+  }
+}
+
+.rooms-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-3;
+
+  button {
+    @include button-style(outline);
+    padding-inline: $space-4;
+    color: $text-muted-color;
+    box-shadow: none;
+
+    &.active {
+      background: rgba($primary-color, 0.12);
+      border-color: rgba($primary-color, 0.12);
+      color: $primary-color;
+    }
+  }
+}
+
+.rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: $space-5;
+}
+
+.rooms-pagination {
+  @include flex-center(row, center, center, $space-4);
+  color: $text-muted-color;
+}
+
+@media (max-width: 720px) {
+  .rooms-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .rooms-toolbar__stats {
+    justify-items: start;
+  }
+
+  .rooms-pagination {
+    flex-direction: column;
+  }
+}

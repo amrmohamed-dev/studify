@@ -1,0 +1,91 @@
+<section class="app-page join-page">
+  <div class="join-page__grid">
+    <div class="join-page__copy">
+      <span class="eyebrow">Join Room</span>
+      <h1>Enter a study room without losing context.</h1>
+      <p>
+        Paste a room ID, preview the room, and then join instantly, request
+        approval, or unlock it with the room password.
+      </p>
+    </div>
+
+    <section class="join-page__card panel-surface">
+      <form class="form-stack" [formGroup]="form" (ngSubmit)="submit()">
+        <div class="form-row">
+          <label for="roomId">Room ID</label>
+          <div class="join-page__room-row">
+            <input
+              id="roomId"
+              class="input-field"
+              type="text"
+              formControlName="roomId"
+              placeholder="Paste the room ID"
+            />
+            <button class="btn-ghost" type="button" (click)="previewRoom()">
+              Preview
+            </button>
+          </div>
+          @if (form.controls.roomId.touched && form.controls.roomId.invalid) {
+            <span class="form-error">A room ID is required.</span>
+          }
+        </div>
+
+        @if (loadingRoom) {
+          <app-state-card
+            kind="loading"
+            title="Fetching room details"
+            message="We are checking the room rules and who owns it."
+          ></app-state-card>
+        } @else if (roomError) {
+          <app-state-card
+            kind="error"
+            title="Room preview unavailable"
+            [message]="roomError"
+          ></app-state-card>
+        } @else if (selectedRoom) {
+          <article class="join-page__preview">
+            <div>
+              <span class="status-pill">{{ roomService.privacyLabel(selectedRoom.privacyType) }}</span>
+              <h2>{{ selectedRoom.name }}</h2>
+              <p>
+                Hosted by {{ selectedRoom.createdBy.name }}. Cap:
+                {{ selectedRoom.maxMembers }} members.
+              </p>
+            </div>
+
+            @if (approvalRequired) {
+              <p class="join-page__notice">
+                This room requires admin approval. We will move you to the
+                waiting screen after you request access.
+              </p>
+            }
+          </article>
+        }
+
+        @if (passwordRequired) {
+          <div class="form-row">
+            <label for="password">Room password</label>
+            <input
+              id="password"
+              class="input-field"
+              type="password"
+              formControlName="password"
+              placeholder="Enter the room password"
+            />
+          </div>
+        }
+
+        @if (submitError) {
+          <p class="form-error">{{ submitError }}</p>
+        }
+
+        <div class="join-page__actions">
+          <button class="btn-primary" type="submit" [disabled]="submitting">
+            {{ submitting ? 'Joining...' : approvalRequired ? 'Request access' : 'Join room' }}
+          </button>
+          <a class="btn-ghost" routerLink="/rooms">Back to rooms</a>
+        </div>
+      </form>
+    </section>
+  </div>
+</section>

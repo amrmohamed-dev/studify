@@ -1,0 +1,122 @@
+$font-sans: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+$primary-color: #005ea4;
+$primary-rgb: 0, 94, 164;
+$secondary-color: #f59e0b;
+$secondary-rgb: 245, 158, 11;
+$bg-color: #f7f9fb;
+$bg-elevated-color: #eef5fb;
+$surface-color: #ffffff;
+$surface-rgb: 255, 255, 255;
+$surface-muted-color: #f3f6fa;
+$text-color: #172033;
+$text-muted-color: #667085;
+$border-color: #d8e0ea;
+$success-color: #15803d;
+$success-rgb: 21, 128, 61;
+$error-color: #dc2626;
+$error-rgb: 220, 38, 38;
+$warning-color: #b45309;
+$warning-rgb: 180, 83, 9;
+$info-color: #2563eb;
+$info-rgb: 37, 99, 235;
+$on-primary-color: #ffffff;
+
+$shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.08);
+$shadow-card: 0 14px 28px rgba(15, 23, 42, 0.08);
+$shadow-lifted: 0 22px 48px rgba(15, 23, 42, 0.12);
+
+$radius-sm: 12px;
+$radius-md: 16px;
+$radius-lg: 20px;
+$radius-xl: 28px;
+$radius-pill: 999px;
+
+$space-0: 0;
+$space-1: 4px;
+$space-2: 8px;
+$space-3: 12px;
+$space-4: 16px;
+$space-5: 20px;
+$space-6: 24px;
+$space-7: 32px;
+$space-8: 40px;
+$space-9: 48px;
+$space-10: 56px;
+
+$text-xs: 0.74rem;
+$text-sm: 0.84rem;
+$text-base: 1rem;
+$text-lg: 1.12rem;
+$text-xl: 1.32rem;
+$text-2xl: 1.8rem;
+$text-3xl: 2.5rem;
+
+$weight-medium: 500;
+$weight-semibold: 600;
+$weight-bold: 700;
+$weight-black: 800;
+
+$breakpoints: (
+  sm: 640px,
+  md: 900px,
+  lg: 1200px,
+);
+
+:root {
+  --font-sans: #{$font-sans};
+
+  --color-primary: #{$primary-color};
+  --color-primary-rgb: #{$primary-rgb};
+  --color-primary-soft: #e8f2fb;
+  --color-secondary: #{$secondary-color};
+  --color-secondary-rgb: #{$secondary-rgb};
+  --color-bg: #{$bg-color};
+  --color-bg-elevated: #{$bg-elevated-color};
+  --color-surface: #{$surface-color};
+  --color-surface-rgb: #{$surface-rgb};
+  --color-surface-muted: #{$surface-muted-color};
+  --color-text: #{$text-color};
+  --color-text-muted: #{$text-muted-color};
+  --color-border: #{$border-color};
+  --color-success: #{$success-color};
+  --color-success-rgb: #{$success-rgb};
+  --color-error: #{$error-color};
+  --color-error-rgb: #{$error-rgb};
+  --color-warning: #{$warning-color};
+  --color-warning-rgb: #{$warning-rgb};
+  --color-info: #{$info-color};
+  --color-info-rgb: #{$info-rgb};
+  --color-on-primary: #{$on-primary-color};
+
+  --shadow-soft: #{$shadow-soft};
+  --shadow-card: #{$shadow-card};
+  --shadow-lifted: #{$shadow-lifted};
+  --shadow-focus: 0 0 0 3px rgba(#{$primary-rgb}, 0.14);
+
+  --radius-sm: #{$radius-sm};
+  --radius-md: #{$radius-md};
+  --radius-lg: #{$radius-lg};
+  --radius-xl: #{$radius-xl};
+  --radius-pill: #{$radius-pill};
+
+  --space-0: #{$space-0};
+  --space-1: #{$space-1};
+  --space-2: #{$space-2};
+  --space-3: #{$space-3};
+  --space-4: #{$space-4};
+  --space-5: #{$space-5};
+  --space-6: #{$space-6};
+  --space-7: #{$space-7};
+  --space-8: #{$space-8};
+  --space-9: #{$space-9};
+  --space-10: #{$space-10};
+
+  --text-xs: #{$text-xs};
+  --text-sm: #{$text-sm};
+  --text-base: #{$text-base};
+  --text-lg: #{$text-lg};
+  --text-xl: #{$text-xl};
+  --text-2xl: #{$text-2xl};
+  --text-3xl: #{$text-3xl};
+}

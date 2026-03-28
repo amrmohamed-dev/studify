@@ -1,129 +1,101 @@
-$primary-color: #007bff;
-$bg-light: #f8f9fa;
-$border-color: #e9ecef;
-$text-muted: #6c757d;
-$sent-bubble: #007bff;
-$received-bubble: #ffffff;
+@use 'variables' as *;
+@use 'mixins' as *;
 
-.chat-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  max-width: 800px;
-  margin: 0 auto;
-  background: #fff;
-  overflow: hidden;
+.chat-panel {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: $space-4;
+}
 
-  .chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1.5rem;
-    background-color: $bg-light;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+.chat-panel__header {
+  h3,
+  p {
+    margin: 0;
   }
 
-  .message-group {
-    display: flex;
-    align-items: flex-end;
-    gap: 0.5rem;
-    max-width: 75%;
-
-    .avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      display: flex;              // 👈 مهم
-      align-items: center;        // 👈 يخلي الحرف في النص عمودي
-      justify-content: center;    // 👈 يخلي الحرف في النص أفقي
-      color: white;
-      font-weight: bold;
-      font-size: 0.85rem;
-      flex-shrink: 0;
-    }
-
-    .message-content {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .message-meta {
-      font-size: 0.75rem;
-      color: $text-muted;
-      margin-bottom: 4px;
-    }
-
-    .bubble {
-      padding: 0.75rem 1rem;
-      border-radius: 18px;
-      font-size: 0.95rem;
-      line-height: 1.4;
-      word-wrap: break-word;
-    }
-
-    &.sent {
-      align-self: flex-end;
-      flex-direction: row-reverse;
-
-      .bubble {
-        background-color: $sent-bubble;
-        color: white;
-        border-bottom-right-radius: 4px;
-      }
-    }
-
-    &.received {
-      align-self: flex-start;
-
-      .bubble {
-        background-color: $received-bubble;
-        color: #333;
-        border-bottom-left-radius: 4px;
-        border: 1px solid $border-color;
-      }
-    }
-  }
-
-  .chat-input-area {
-    padding: 1rem;
-    border-top: 1px solid $border-color;
-    display: flex;
-    gap: 0.5rem;
-
-    input {
-      flex: 1;
-      padding: 0.75rem;
-      border-radius: 20px;
-      border: 1px solid $border-color;
-    }
-
-    .send-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: $primary-color;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      svg {
-        fill: white;
-        width: 20px;
-      }
-    }
+  p {
+    color: $text-muted-color;
   }
 }
 
-.chat-header {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid $border-color;
-  background: white;
+.chat-panel__messages {
+  min-height: 320px;
+  max-height: 60vh;
+  overflow-y: auto;
+  display: grid;
+  gap: $space-3;
+  padding-right: $space-2;
+}
 
-  .chat-title {
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: 600;
+.chat-panel__state,
+.chat-panel__empty {
+  padding: $space-5;
+  border-radius: $radius-lg;
+  background: $surface-muted-color;
+  color: $text-muted-color;
+}
+
+.chat-panel__state--error {
+  color: $error-color;
+  background: rgba($error-color, 0.08);
+}
+
+.chat-panel__composer {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: $space-3;
+}
+
+.message {
+  display: flex;
+  align-items: flex-end;
+  gap: $space-3;
+  max-width: 86%;
+}
+
+.message--mine {
+  margin-left: auto;
+  flex-direction: row-reverse;
+}
+
+.message__avatar {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  @include flex-center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, $primary-color, rgba($secondary-color, 0.9));
+  color: $on-primary-color;
+  font-weight: $weight-black;
+}
+
+.message__body {
+  display: grid;
+  gap: $space-1;
+}
+
+.message__meta {
+  font-size: 0.76rem;
+  font-weight: $weight-bold;
+  color: $text-muted-color;
+}
+
+.message__bubble {
+  padding: 12px 14px;
+  border-radius: $radius-lg;
+  background: $surface-muted-color;
+  color: $text-color;
+  box-shadow: $shadow-card;
+}
+
+.message--mine .message__bubble {
+  background: $primary-color;
+  color: $on-primary-color;
+}
+
+@media (max-width: 720px) {
+  .chat-panel__composer {
+    grid-template-columns: 1fr;
   }
 }

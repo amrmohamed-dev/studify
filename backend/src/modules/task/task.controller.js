@@ -2,6 +2,8 @@ import Task from './task.model.js';
 import catchAsync from '../../utils/error/catchAsync.js';
 import AppError from '../../utils/error/appError.js';
 import APIFeatures from '../../utils/apiFeatures.js';
+import { emitToRoom } from '../../sockets/utils/emit.js';
+import SOCKET_EVENTS from '../../sockets/constants.js';
 export const createTask = catchAsync(async (req, res, next) => {
   const { title } = req.body;
   const { roomId } = req.params;
@@ -12,10 +14,23 @@ export const createTask = catchAsync(async (req, res, next) => {
     createdBy: req.user._id,
   });
 
+  const populatedTask = await Task.findById(task._id)
+    .populate('createdBy', 'name')
+    .populate('doneBy.user', 'name');
+
+  const serializedTask = {
+    ...populatedTask.toJSON(),
+    doneCount: populatedTask.doneCount,
+  };
+
+  emitToRoom(roomId, SOCKET_EVENTS.TASK_CREATED, {
+    task: serializedTask,
+  });
+
   res.status(201).json({
     status: 'success',
     message: 'Task created successfully',
-    data: { task: { ...task.toJSON(), doneCount: task.doneCount } },
+    data: { task: serializedTask },
   });
 });
 
@@ -78,10 +93,23 @@ export const toggleTask = catchAsync(async (req, res, next) => {
 
   await task.save();
 
+  const populatedTask = await Task.findById(task._id)
+    .populate('createdBy', 'name')
+    .populate('doneBy.user', 'name');
+
+  const serializedTask = {
+    ...populatedTask.toJSON(),
+    doneCount: populatedTask.doneCount,
+  };
+
+  emitToRoom(task.room, SOCKET_EVENTS.TASK_UPDATED, {
+    task: serializedTask,
+  });
+
   res.status(200).json({
     status: 'success',
     message: 'Task toggled successfully',
-    data: { task: { ...task.toJSON(), doneCount: task.doneCount } },
+    data: { task: serializedTask },
   });
 });
 
@@ -94,10 +122,23 @@ export const updateTask = catchAsync(async (req, res, next) => {
 
   if (!task) return next(new AppError('Task not found', 404));
 
+  const populatedTask = await Task.findById(task._id)
+    .populate('createdBy', 'name')
+    .populate('doneBy.user', 'name');
+
+  const serializedTask = {
+    ...populatedTask.toJSON(),
+    doneCount: populatedTask.doneCount,
+  };
+
+  emitToRoom(task.room, SOCKET_EVENTS.TASK_UPDATED, {
+    task: serializedTask,
+  });
+
   res.status(200).json({
     status: 'success',
     message: 'Task updated successfully',
-    data: { task: { ...task.toJSON(), doneCount: task.doneCount } },
+    data: { task: serializedTask },
   });
 });
 
@@ -106,9 +147,40 @@ export const deleteTask = catchAsync(async (req, res, next) => {
 
   if (!task) return next(new AppError('Task not found', 404));
 
+  emitToRoom(task.room, SOCKET_EVENTS.TASK_UPDATED, {
+    taskId: task._id.toString(),
+    roomId: task.room.toString(),
+    deleted: true,
+  });
+
   res.status(204).json({
     status: 'success',
     message: 'Task deleted successfully',
     data: null,
+  });
+});
+
+export const getTaskStats = catchAsync(async (req, res, next) => {
+  const stats = await Task.aggregate([
+    {
+      $unwind: '$doneBy',
+    },
+
+    {
+      $match: { 'doneBy.user': req.user._id },
+    },
+    {
+      $group: {
+        _id: '$doneBy.user',
+        completedTasks: { $sum: 1 },
+      },
+    },
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      completedTasks: stats,
+    },
   });
 });

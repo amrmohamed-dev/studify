@@ -1,26 +1,45 @@
-import { AsyncPipe } from '@angular/common';
-import { Component, HostListener } from '@angular/core';
+import { AsyncPipe, DatePipe } from '@angular/common';
+import { Component, DestroyRef, HostListener, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { NotificationService } from '../../../core/services/notification.service';
+import { SocketService } from '../../../core/services/socket.service';
+import { NotificationItem } from '../../models/notification.models';
 import {
-  LucideAngularModule,
-  Users,
-  Settings,
-  LogOut,
-  LayoutDashboard,
-  House,
   Bell,
+  House,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  Users,
+  LucideAngularModule,
 } from 'lucide-angular';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, AsyncPipe, RouterLinkActive, LucideAngularModule],
+  imports: [
+    RouterLink,
+    AsyncPipe,
+    DatePipe,
+    RouterLinkActive,
+    LucideAngularModule,
+  ],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss',
 })
 export class NavbarComponent {
-  icons = {
+  readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly notificationService = inject(NotificationService);
+  private readonly socketService = inject(SocketService);
+
+  readonly user$ = this.auth.user$;
+
+  readonly icons = {
+    bell: Bell,
     home: House,
     rooms: LayoutDashboard,
     friends: Users,
@@ -28,69 +47,112 @@ export class NavbarComponent {
     logout: LogOut,
   };
 
+  notifications: NotificationItem[] = [];
+  unreadCount = 0;
+
   showNotif = false;
   showUserMenu = false;
   isMenuOpen = false;
 
-  user$ = this.auth.user$;
+  constructor() {
+    this.router.events
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.closeMenu());
 
-  notifications = [
-    { _id: 1, message: 'Omar replied in the JavaScript room.' },
-    { _id: 2, message: 'Mariam sent you a friend request.' },
-  ];
+    this.auth.user$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((user) => {
+        if (!user) {
+          this.notifications = [];
+          this.unreadCount = 0;
+          return;
+        }
 
-  constructor(
-    public auth: AuthService,
-    private router: Router,
-  ) {
-    this.router.events.subscribe(() => {
-      this.closeMenu();
-    });
+        this.notificationService.connectLiveStream();
+        this.notificationService
+          .loadNotifications(8)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe();
+      });
+
+    this.notificationService.notifications$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((notifications) => {
+        this.notifications = notifications.slice(0, 5);
+        this.unreadCount = notifications.filter((item) => !item.isRead).length;
+      });
   }
 
-  toggleMenu() {
+  toggleMenu(): void {
     this.isMenuOpen = !this.isMenuOpen;
   }
 
-  closeMenu() {
+  closeMenu(): void {
     this.isMenuOpen = false;
   }
 
-  toggleNotif() {
+  toggleNotif(): void {
     this.showNotif = !this.showNotif;
     this.showUserMenu = false;
   }
 
-  toggleUser() {
+  toggleUser(): void {
     this.showUserMenu = !this.showUserMenu;
     this.showNotif = false;
   }
 
   @HostListener('document:click', ['$event'])
-  closeMenus(event: Event) {
+  closeMenus(event: Event): void {
     if (!(event.target as HTMLElement).closest('.nav-right')) {
       this.showNotif = false;
       this.showUserMenu = false;
     }
   }
 
-  stopDropdownClose(event: MouseEvent) {
+  stopDropdownClose(event: MouseEvent): void {
     event.stopPropagation();
   }
 
-  logout() {
+  logout(): void {
+    this.socketService.disconnect();
     this.auth.logout().subscribe(() => {
       this.router.navigate(['/login']);
     });
   }
 
-  getInitials(name?: string | null) {
+  openNotification(notification: NotificationItem): void {
+    const target = this.normalizeLink(notification.link);
+
+    if (!notification.isRead) {
+      this.notificationService
+        .markAsRead(notification._id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => this.router.navigateByUrl(target),
+          error: () => this.router.navigateByUrl(target),
+        });
+    } else {
+      this.router.navigateByUrl(target);
+    }
+
+    this.showNotif = false;
+  }
+
+  getInitials(name?: string | null): string {
     return name
       ? name
           .split(' ')
           .slice(0, 2)
-          .map((n) => n[0].toUpperCase())
+          .map((part) => part[0]?.toUpperCase() ?? '')
           .join('')
       : 'SU';
+  }
+
+  private normalizeLink(link: string | null): string {
+    if (!link) {
+      return '/notification';
+    }
+
+    return link.startsWith('/') ? link : `/${link}`;
   }
 }

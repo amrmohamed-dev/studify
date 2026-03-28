@@ -1,0 +1,86 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.page-card,
+.panel-surface {
+  @include card-style($padding: $space-5, $radius: $radius-xl, $shadow: $shadow-soft);
+}
+
+.eyebrow,
+.auth-eyebrow,
+.simple-page-kicker {
+  display: inline-flex;
+  align-items: center;
+  padding: $space-2 $space-3;
+  border-radius: $radius-pill;
+  background: rgba($primary-color, 0.1);
+  color: $primary-color;
+  font-size: $text-sm;
+  font-weight: $weight-bold;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.simple-page-kicker {
+  width: fit-content;
+  background: rgba($secondary-color, 0.14);
+  color: $warning-color;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  padding: 0 $space-2;
+  border-radius: $radius-pill;
+  background: rgba($primary-color, 0.12);
+  color: $primary-color;
+  font-size: $text-xs;
+  font-weight: $weight-bold;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-2 $space-3;
+  border-radius: $radius-pill;
+  background: $surface-muted-color;
+  color: $text-muted-color;
+  font-size: $text-sm;
+  font-weight: $weight-bold;
+}
+
+.surface-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-2 $space-3;
+  border-radius: $radius-pill;
+  background: rgba($primary-color, 0.08);
+  color: $primary-color;
+  font-size: $text-sm;
+  font-weight: $weight-semibold;
+}
+
+.soft-alert {
+  padding: $space-4;
+  border-radius: $radius-lg;
+  font-weight: $weight-semibold;
+}
+
+.soft-alert--warning {
+  background: rgba($secondary-color, 0.12);
+  color: $warning-color;
+}
+
+.soft-alert--error {
+  background: rgba($error-color, 0.1);
+  color: $error-color;
+}
+
+.soft-alert--success {
+  background: rgba($success-color, 0.1);
+  color: $success-color;
+}

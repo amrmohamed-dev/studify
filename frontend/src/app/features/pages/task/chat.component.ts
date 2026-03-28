@@ -48,8 +48,7 @@ export class ChatComponent implements OnInit, AfterViewInit {
     this.http
       .get<any>(`/api/v1/rooms/${this.roomId}/messages`)
       .subscribe((res) => {
-        this.messages = (res.data.messages || []).reverse();
-        this.scrollToBottom();
+        this.messages = (res.data.messages || []);
       });
 
     this.socketService.getMessages((msg: any) => {
@@ -65,7 +64,6 @@ export class ChatComponent implements OnInit, AfterViewInit {
 
     this.socketService.sendMessage({
       roomId: this.roomId,
-      userId: this.userId,
       content: this.message,
     });
 

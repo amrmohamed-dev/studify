@@ -26,7 +26,10 @@ taskRouter
   )
   .delete(taskController.deleteTask);
 
+  
 taskRouter.patch("/tasks/:id/toggle", taskController.toggleTask);
+
+taskRouter.get('/tasks/stats/me', taskController.getTaskStats);
 
 taskRouter.get("/test", (req, res) => {
   res.json({ message: "working" });

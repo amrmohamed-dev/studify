@@ -16,6 +16,10 @@ const SOCKET_EVENTS = {
   ROOM_KICKED: 'room:kicked',
   ROOM_UPDATED: 'room:updated',
   ROOM_MESSAGE: 'room:message',
+  TASK_CREATED: 'task:created',
+  TASK_UPDATED: 'task:updated',
+  SESSION_STARTED: 'session:started',
+  SESSION_ENDED: 'session:ended',
 };
 
 export default SOCKET_EVENTS;

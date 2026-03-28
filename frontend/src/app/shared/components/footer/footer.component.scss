@@ -1,46 +1,57 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
 .footer {
-  margin: 40px auto 24px;
-  padding: 32px 24px;
-  background: #ffffff;
+  margin: $space-8 auto $space-6;
+  padding: $space-7 $space-6;
   text-align: center;
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.06);
+  @include card-style($padding: $space-7 $space-6, $radius: $radius-xl, $shadow: $shadow-soft);
 }
 
 .footer-brand img {
   height: 80px;
-  margin-bottom: 12px;
+  margin: 0 auto $space-3;
+}
+
+.footer-brand p,
+.footer-bottom {
+  color: $text-muted-color;
 }
 
 .footer-brand p {
   margin: 0;
-  color: #4b5563;
-  font-size: 1rem;
+  font-size: $text-base;
 }
 
 .footer-links {
-  margin: 24px 0 18px;
+  margin: $space-6 0 $space-5;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 12px;
-}
+  gap: $space-3;
 
-.footer-links a {
-  padding: 10px 16px;
-  border-radius: 999px;
-  background: #f7f9fb;
-  color: #005ea4;
-  text-decoration: none;
-  font-weight: 600;
+  a {
+    padding: 10px 16px;
+    border-radius: $radius-pill;
+    background: $surface-muted-color;
+    color: $primary-color;
+    text-decoration: none;
+    font-weight: $weight-semibold;
+    @include transition((background-color, color, transform));
+
+    &:hover {
+      transform: translateY(-1px);
+      background: rgba($primary-color, 0.12);
+    }
+  }
 }
 
 .footer-bottom {
   font-size: 0.9rem;
-  color: #6b7280;
 }
 
-@media (max-width: 640px) {
+@include respond-down(sm) {
   .footer {
-    padding: 28px 18px;
+    padding: $space-7 $space-4;
   }
 }

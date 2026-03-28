@@ -9,7 +9,9 @@
       </svg>
       Back to Room
     </button>
-    <h1 class="settings-title">Room Settings</h1>
+    <h1 class="settings-title">
+      {{ mode === 'create' ? 'Create Room' : 'Room Settings' }}
+    </h1>
   </div>
 
   <!-- Skeleton Loader -->
@@ -228,11 +230,11 @@
           <path stroke-linecap="round" stroke-linejoin="round"
             d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
-        Save Changes
+         {{ mode === 'create' ? 'Create Room' : 'Save Changes' }}
       </span>
       <span class="btn-content" *ngIf="isLoading">
         <span class="spinner"></span>
-        Saving...
+         {{ mode === 'create' ? 'Creating...' : 'Saving...' }}
       </span>
     </button>
 

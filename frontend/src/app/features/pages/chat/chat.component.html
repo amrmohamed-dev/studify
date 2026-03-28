@@ -1,50 +1,57 @@
-<div class="chat-container">
-  <div class="chat-messages" #messagesContainer>
+<section class="chat-panel">
+  <header class="chat-panel__header">
+    <div>
+      <h3>Room chat</h3>
+      <p>Share quick updates without leaving the study flow.</p>
+    </div>
+  </header>
 
-    <div
-      *ngFor="let msg of messages"
-      class="message-group"
-      [ngClass]="isMe(msg) ? 'sent' : 'received'"
-    >
+  @if (loading) {
+    <div class="chat-panel__state">Loading conversation...</div>
+  } @else if (errorMessage) {
+    <div class="chat-panel__state chat-panel__state--error">
+      {{ errorMessage }}
+    </div>
+  } @else {
+    <div class="chat-panel__messages" #messagesContainer>
+      @if (!messages.length) {
+        <div class="chat-panel__empty">
+          No messages yet. Start the conversation for the room.
+        </div>
+      }
 
-      <ng-container *ngIf="!isMe(msg)">
-        <div 
-          class="avatar"
-          [style.background]="getAvatarColor(msg.sender?.name)"
+      @for (message of messages; track message._id || message._tempId || $index) {
+        <article
+          class="message"
+          [class.message--mine]="isMine(message)"
         >
-          {{ getInitial(msg.sender?.name) }}
-        </div>
-      </ng-container>
+          @if (!isMine(message)) {
+            <span class="message__avatar">{{ senderInitial(message) }}</span>
+          }
 
-      <div class="message-content">
-
-        <span class="message-meta">
-          {{ formatTime(msg.createdAt) }} •
-          {{ isMe(msg) ? 'You' : msg.sender?.name }}
-        </span>
-
-        <div class="bubble">
-          {{ msg.content }}
-        </div>
-
-      </div>
-
+          <div class="message__body">
+            <span class="message__meta">
+              {{ isMine(message) ? 'You' : (message.sender.name || 'Member') }}
+              ·
+              {{ formatTime(message.createdAt) }}
+            </span>
+            <div class="message__bubble">{{ message.content }}</div>
+          </div>
+        </article>
+      }
     </div>
 
-  </div>
-
-  <div class="chat-input-area">
-    <input
-      [(ngModel)]="message"
-      placeholder="Type a message..."
-      (keyup.enter)="send()"
-    />
-
-    <button class="send-btn" (click)="send()">
-      <svg viewBox="0 0 24 24">
-        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-      </svg>
-    </button>
-  </div>
-
-</div>
+    <div class="chat-panel__composer">
+      <input
+        class="input-field"
+        type="text"
+        [(ngModel)]="draft"
+        placeholder="Type a message..."
+        (keyup.enter)="send()"
+      />
+      <button class="btn-primary" type="button" [disabled]="!draft.trim()" (click)="send()">
+        Send
+      </button>
+    </div>
+  }
+</section>

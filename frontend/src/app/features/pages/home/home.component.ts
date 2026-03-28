@@ -1,65 +1,58 @@
-import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { HomeService, TaskStats, SessionStats, Room } from './home.service';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
-
+import { RoomService } from '../../../core/services/room.service';
+import { Room } from '../../../core/models/room.model';
+import { HomeService, SessionStats, TaskStats } from './home.service';
 
 @Component({
   selector: 'app-home',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+  styleUrls: ['./home.component.scss'],
 })
-export class HomeComponent implements OnInit {
-  private homeService = inject(HomeService);
-  private authService = inject(AuthService);
-  private router = inject(Router);
+export class HomeComponent implements OnInit, OnDestroy {
+  private readonly homeService = inject(HomeService);
+  private readonly authService = inject(AuthService);
+  private readonly roomService = inject(RoomService);
+  private readonly router = inject(Router);
 
   taskStats: TaskStats | null = null;
   sessionStats: SessionStats | null = null;
-  rooms: Room[] = [];
-  loading = true;
 
-  private mockRooms: Room[] = [
-    { _id: '1', name: 'Advanced Quantum Theory', image: { url: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&h=200&fit=crop', publicId: null } },
-    { _id: '2', name: 'Ethics in AI Research', image: { url: 'https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=400&h=200&fit=crop', publicId: null } },
-    { _id: '3', name: 'Biology 101', image: { url: 'https://images.unsplash.com/photo-1628595351029-c2bf17511435?w=400&h=200&fit=crop', publicId: null } },
-    { _id: '4', name: 'Math Analysis', image: { url: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400&h=200&fit=crop', publicId: null } },
-    { _id: '5', name: 'History of Science', image: { url: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400&h=200&fit=crop', publicId: null } },
-    { _id: '6', name: 'Psychology Basics', image: { url: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=400&h=200&fit=crop', publicId: null } },
-  ];
+  myRooms: Room[] = [];
+  suggestedRooms: Room[] = [];
+
+  loadingMyRooms = true;
+  loadingSuggestedRooms = true;
+
+  private readonly subscriptions = new Subscription();
 
   ngOnInit(): void {
-    const userId = this.authService['userSubject'].value?._id;
+    this.subscriptions.add(
+      this.authService.user$.subscribe((user) => {
+        const userId = user?._id;
 
-    this.homeService.getTaskStats().subscribe({
-      next: (data: TaskStats) => this.taskStats = data,
-      error: (err: any) => console.error('Task stats error:', err)
-    });
-
-    this.homeService.getSessionStats().subscribe({
-      next: (data: SessionStats) => this.sessionStats = data,
-      error: (err: any) => console.error('Session stats error:', err)
-    });
-
-    if (userId) {
-      this.homeService.getMyRooms(userId).subscribe({
-        next: (res: any) => {
-          this.rooms = res.data.rooms;
-          this.loading = false;
-        },
-        error: (err: any) => {
-          console.error('Rooms error:', err);
-          this.rooms = this.mockRooms;
-          this.loading = false;
+        if (userId) {
+          this.loadStats();
+          this.loadMyRooms(userId);
+        } else {
+          this.taskStats = null;
+          this.sessionStats = null;
+          this.myRooms = [];
+          this.loadingMyRooms = false;
         }
-      });
-    } else {
-      this.rooms = this.mockRooms;
-      this.loading = false;
-    }
+
+        this.loadSuggestedRooms();
+      }),
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   goToRooms(): void {
@@ -72,5 +65,83 @@ export class HomeComponent implements OnInit {
 
   enterRoom(roomId: string): void {
     this.router.navigate(['/rooms', roomId]);
+  }
+
+  get sessionHoursDisplay(): string {
+    if (!this.sessionStats) {
+      return '--';
+    }
+
+    const hours = this.sessionStats.totalHours;
+    return `${Number.isInteger(hours) ? hours : hours.toFixed(2)}h`;
+  }
+
+  get sessionTrendLabel(): string {
+    if (!this.sessionStats) {
+      return 'Weekly progress will appear here.';
+    }
+
+    const change = this.sessionStats.percentageChange;
+
+    if (change === 0) {
+      return 'No change compared with last week.';
+    }
+
+    const direction = change > 0 ? 'up' : 'down';
+    return `${Math.abs(change).toFixed(2)}% ${direction} from last week.`;
+  }
+
+  private loadStats(): void {
+    this.homeService.getTaskStats().subscribe({
+      next: (data) => {
+        this.taskStats = data;
+      },
+      error: (err) => {
+        console.error('Task stats error:', err);
+        this.taskStats = null;
+      },
+    });
+
+    this.homeService.getSessionStats().subscribe({
+      next: (data) => {
+        this.sessionStats = data;
+      },
+      error: (err) => {
+        console.error('Session stats error:', err);
+        this.sessionStats = null;
+      },
+    });
+  }
+
+  private loadMyRooms(userId: string): void {
+    this.loadingMyRooms = true;
+
+    this.roomService.getRooms(1, 6, '', 'my', userId).subscribe({
+      next: (result) => {
+        this.myRooms = result.items;
+        this.loadingMyRooms = false;
+      },
+      error: (err) => {
+        console.error('My Rooms error:', err);
+        this.myRooms = [];
+        this.loadingMyRooms = false;
+      },
+    });
+  }
+
+  private loadSuggestedRooms(): void {
+    this.loadingSuggestedRooms = true;
+
+    this.roomService.getRooms(1, 6, '', 'public').subscribe({
+      next: (result) => {
+        this.suggestedRooms = result.items;
+        this.loadingSuggestedRooms = false;
+      },
+      error: (err) => {
+        console.error('Suggested Rooms error:', err);
+        this.suggestedRooms = [];
+        this.loadingSuggestedRooms = false;
+      },
+    });
   }
 }

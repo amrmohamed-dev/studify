@@ -1,0 +1,65 @@
+<section class="app-page notification-page">
+  <div class="page-head">
+    <div>
+      <span class="eyebrow">Notification Center</span>
+      <h1>Everything that needs your attention.</h1>
+      <p>
+        Track room approvals, friend activity, and study session updates in one
+        clean feed.
+      </p>
+    </div>
+
+    @if (!loading && notifications.length) {
+      <button class="btn-secondary" type="button" (click)="markAllAsRead()">
+        Mark all as read
+      </button>
+    }
+  </div>
+
+  @if (loading) {
+    <app-state-card
+      kind="loading"
+      title="Loading your latest updates"
+      message="We are syncing room activity, approvals, and study notifications."
+    ></app-state-card>
+  } @else if (errorMessage) {
+    <app-state-card
+      kind="error"
+      title="Notifications are unavailable"
+      [message]="errorMessage"
+    >
+      <button class="btn-primary" type="button" (click)="refresh()">
+        Try again
+      </button>
+    </app-state-card>
+  } @else if (!notifications.length) {
+    <app-state-card
+      kind="empty"
+      title="Your feed is quiet for now"
+      message="Once rooms, friends, or sessions change, you will see them here."
+      actionLabel="Browse rooms"
+      actionLink="/rooms"
+    ></app-state-card>
+  } @else {
+    <div class="notification-list">
+      @for (notification of notifications; track notification._id) {
+        <button
+          class="notification-item"
+          [class.notification-item--unread]="!notification.isRead"
+          type="button"
+          (click)="openNotification(notification)"
+        >
+          <div class="notification-item__status"></div>
+
+          <div class="notification-item__content">
+            <span class="notification-item__type">{{ notification.type }}</span>
+            <strong>{{ notification.message || 'New activity in Studify.' }}</strong>
+            <span class="notification-item__time">
+              {{ notification.createdAt | date: 'medium' }}
+            </span>
+          </div>
+        </button>
+      }
+    </div>
+  }
+</section>

@@ -1,45 +1,72 @@
-<div class="tasks-container">
-  <h3 class="tasks-title">Tasks</h3>
+<section class="task-panel">
+  <header class="task-panel__header">
+    <div>
+      <h3>Room tasks</h3>
+      <p>Keep next actions visible for everyone in the room.</p>
+    </div>
+  </header>
 
-  <!-- إضافة مهمة جديدة -->
-  <div class="task-input-area">
+  <div class="task-panel__composer">
     <input
+      class="input-field"
+      type="text"
       [(ngModel)]="newTaskTitle"
       placeholder="Add a new task..."
       (keyup.enter)="addTask()"
     />
-    <button (click)="addTask()">+</button>
+    <button class="btn-primary" type="button" [disabled]="!newTaskTitle.trim()" (click)="addTask()">
+      Add
+    </button>
   </div>
 
-  <!-- قائمة المهام -->
-  <div class="task-list">
-    <div class="task-item" *ngFor="let task of tasks">
-      
-      <!-- زرار الـ check عشان toggle done -->
-      <div class="task-check" (click)="toggleTask(task)">
-        <span *ngIf="isDone(task)">✓</span>
-      </div>
-
-      <!-- عرض أو تعديل العنوان -->
-      <span *ngIf="!task.editing" class="task-title">{{ task.title }}</span>
-      <input
-        *ngIf="task.editing"
-        [(ngModel)]="task.title"
-        (keyup.enter)="updateTask(task._id, task.title); task.editing=false"
-      />
-
-      <!-- أزرار التحكم -->
-      <button
-        class="edit-btn"
-        title="Edit task"
-        (click)="$event.stopPropagation(); task.editing = !task.editing"
-      >✎</button>
-
-      <button
-        class="delete-btn"
-        title="Delete task"
-        (click)="$event.stopPropagation(); deleteTask(task._id)"
-      >✕</button>
+  @if (loading) {
+    <div class="task-panel__state">Loading tasks...</div>
+  } @else if (errorMessage) {
+    <div class="task-panel__state task-panel__state--error">{{ errorMessage }}</div>
+  } @else if (!tasks.length) {
+    <div class="task-panel__state">
+      No tasks yet. Add the first action item for the room.
     </div>
-  </div>
-</div>
+  } @else {
+    <div class="task-list">
+      @for (task of tasks; track task._id) {
+        <article class="task-item" [class.task-item--done]="isDone(task)">
+          <button class="task-item__check" type="button" (click)="toggleTask(task)">
+            {{ isDone(task) ? 'Done' : 'Mark' }}
+          </button>
+
+          @if (editingTaskId === task._id) {
+            <input
+              class="input-field"
+              type="text"
+              [(ngModel)]="editingTitle"
+              (keyup.enter)="saveEditing()"
+            />
+          } @else {
+            <div class="task-item__content">
+              <strong>{{ task.title }}</strong>
+              <span>
+                {{ task.doneCount || 0 }} completed
+              </span>
+            </div>
+          }
+
+          <div class="task-item__actions">
+            @if (editingTaskId === task._id) {
+              <button class="btn-ghost" type="button" (click)="saveEditing()">
+                Save
+              </button>
+            } @else {
+              <button class="btn-ghost" type="button" (click)="startEditing(task)">
+                ✎
+              </button>
+            }
+            <button class="btn-danger" type="button" (click)="deleteTask(task._id)">
+              ✕
+            </button>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>

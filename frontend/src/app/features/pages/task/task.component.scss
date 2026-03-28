@@ -1,178 +1,118 @@
-.tasks-container {
-  display: flex;
-  flex-direction: column;
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.task-panel {
   height: 100%;
-  font-family: 'DM Sans', sans-serif;
-  background: var(--color-bg);
-  padding: 20px;
-  border-radius: 16px;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: $space-4;
 }
 
-.tasks-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--color-text);
-  margin-bottom: 16px;
-}
-
-/* ================= INPUT ================= */
-.task-input-area {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 18px;
-
-  input {
-    flex: 1;
-    border: 1px solid transparent;
-    outline: none;
-    background: var(--color-surface);
-    border-radius: 12px;
-    padding: 12px 14px;
-    font-size: 14px;
-    color: var(--color-text);
-    box-shadow: var(--shadow-soft);
-    transition: all 0.2s ease;
-
-    &:focus {
-      border-color: var(--color-primary);
-      box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.15);
-    }
-
-    &::placeholder {
-      color: var(--color-muted);
-    }
+.task-panel__header {
+  h3,
+  p {
+    margin: 0;
   }
 
-  button {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    border: none;
-    background: var(--color-primary);
-    color: white;
-    font-size: 20px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-
-    &:hover {
-      transform: scale(1.08);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    &:active {
-      transform: scale(0.95);
-    }
+  p {
+    color: $text-muted-color;
   }
 }
 
-/* ================= LIST ================= */
+.task-panel__composer {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: $space-3;
+}
+
+.task-panel__state {
+  padding: $space-5;
+  border-radius: $radius-lg;
+  background: $surface-muted-color;
+  color: $text-muted-color;
+}
+
+.task-panel__state--error {
+  color: $error-color;
+  background: rgba($error-color, 0.08);
+}
+
 .task-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
   overflow-y: auto;
-  padding-right: 4px;
-
-  &::-webkit-scrollbar {
-    width: 5px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--color-muted);
-    border-radius: 10px;
-  }
+  display: grid;
+  gap: $space-3;
+  padding-right: $space-2;
 }
 
-/* ================= ITEM ================= */
 .task-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: $space-3;
   align-items: center;
-  gap: 12px;
-  background: var(--color-surface);
-  border-radius: 14px;
-  padding: 12px 14px;
-  cursor: pointer;
-  box-shadow: var(--shadow-soft);
-  transition: all 0.2s ease;
+  @include card-style($padding: $space-4, $radius: $radius-lg, $shadow: $shadow-card);
+  @include transition((transform, box-shadow, background-color, border-color));
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
-  }
-
-  &.done {
-    opacity: 0.7;
-
-    .task-check {
-      background: var(--color-primary);
-      border-color: var(--color-primary);
-      color: white;
-    }
-
-    .task-title {
-      text-decoration: line-through;
-      color: var(--color-muted);
-    }
+    transform: translateY(-1px);
+    box-shadow: $shadow-soft;
   }
 }
 
-/* ================= CHECK ================= */
-.task-check {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 2px solid var(--color-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  flex-shrink: 0;
-  transition: all 0.2s ease;
+.task-item--done {
+  background: rgba($success-color, 0.06);
+}
+
+.task-item__check {
+  border: 0;
+  border-radius: $radius-pill;
+  padding: 10px 12px;
+   flex-shrink: 0;
+  background: rgba($primary-color, 0.1);
+  color: $primary-color;
+  font-weight: $weight-black;
+  cursor: pointer;
+  @include transition((transform, background-color, color));
 
   &:hover {
-    transform: scale(1.1);
+    transform: scale(1.03);
   }
 }
 
-/* ================= TITLE ================= */
-.task-title {
-  flex: 1;
-  font-size: 14px;
-  color: var(--color-text);
+.task-item--done .task-item__check {
+  background: rgba($success-color, 0.12);
+  color: $success-color;
 }
 
-/* ================= EDIT INPUT ================= */
-.task-item input {
-  flex: 1;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 14px;
-  color: var(--color-text);
+.task-item__content {
+  display: grid;
+  gap: $space-1;
+  min-width: 0; // 🔥 أهم سطر
+
+  strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
-/* ================= BUTTONS ================= */
-.edit-btn,
-.delete-btn {
-  background: none;
-  border: none;
-  color: var(--color-muted);
-  font-size: 14px;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
+.task-item__actions {
+  display: flex;
+  gap: $space-2;
+  flex-shrink: 0; // 🔥 مهم
 }
 
-.edit-btn:hover {
-  color: #4a90e2;
-  background: rgba(74, 144, 226, 0.1);
-}
+@media (max-width: 720px) {
+  .task-panel__composer,
+  .task-item {
+    grid-template-columns: 1fr;
+  }
 
-.delete-btn:hover {
-  color: #e05555;
-  background: rgba(224, 85, 85, 0.1);
+  .task-item__actions {
+    width: 100%;
+  }
+
+  .task-item__actions .btn-ghost,
+  .task-item__actions .btn-danger {
+    flex: 1;
+  }
 }
