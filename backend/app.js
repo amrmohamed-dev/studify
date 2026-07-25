@@ -2,7 +2,6 @@ import path from 'path';
 import { existsSync } from 'fs';
 import express from 'express';
 import morgan from 'morgan';
-import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import AppError from './src/utils/error/appError.js';
 import globalErrorHandler from './src/middlewares/globalErrorHandler.js';
@@ -17,15 +16,6 @@ import roomRouter from './src/modules/room/room.route.js';
 const app = express();
 
 app.enable('trust proxy');
-
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map((origin) => origin.trim())
-  : ['http://localhost:4200'];
-
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-}));
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));

@@ -48,31 +48,12 @@ export class LoginPageComponent {
         }),
       )
       .subscribe({
-        next: (res: any) => {
-          const user = res?.data?.user;
-
-          if (user && !user.isVerified) {
-            this.authService
-              .sendOtp('Email Confirmation', user.email)
-              .pipe(takeUntilDestroyed(this.destroyRef))
-              .subscribe({
-                next: () => this.navigateToOtp(user.email),
-                error: () => this.navigateToOtp(user.email),
-              });
-            return;
-          }
-
+        next: () => {
           this.router.navigate(['/home']);
         },
         error: (err) => {
           this.error = this.authService.getErrorMessage(err);
         },
       });
-  }
-
-  private navigateToOtp(email: string): void {
-    this.router.navigate(['/otp'], {
-      queryParams: { purpose: 'email-confirmation', email },
-    });
   }
 }

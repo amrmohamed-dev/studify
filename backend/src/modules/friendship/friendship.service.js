@@ -41,9 +41,6 @@ const sendFriendRequest = async (requesterId, recipientId) => {
     if (existingFriendship.status === 'accepted') {
       throw new AppError('You are already friends.', 409);
     }
-    if (existingFriendship.status === 'pending') {
-      throw new AppError('A friend request is already pending.', 409);
-    }
   }
 
   const friendship = await Friendship.create({

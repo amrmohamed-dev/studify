@@ -10,13 +10,12 @@ import {
 } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { User } from '../models/api.model';
-import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  private api = environment.apiUrl;
+  private api = '/api/v1';
   private http = inject(HttpClient);
 
   private userSubject = new BehaviorSubject<User | null>(null);
@@ -29,14 +28,6 @@ export class AuthService {
 
   isLoggedIn(): boolean {
     return !!this.userSubject.value;
-  }
-
-  getCurrentUser(): User | null {
-    return this.userSubject.value;
-  }
-
-  getCurrentUserId(): string | undefined {
-    return this.userSubject.value?._id;
   }
 
   setUser(user: User | null) {
@@ -100,54 +91,26 @@ export class AuthService {
     password: string;
     passwordConfirm: string;
   }) {
-    return this.http.post<any>(`${this.api}/auth/register`, data).pipe(
-      tap((res) => {
-        this.userSubject.next(res.data.user);
-        this.me$ = undefined;
-      }),
-    );
+    return this.http.post<any>(`${this.api}/auth/register`, data);
   }
 
-  sendOtp(purpose: 'Email Confirmation' | 'Password Recovery', email: string) {
+  sendOtp(purpose: 'Email Confirmation' | 'Password Recovery', email?: string) {
     return this.http.post(
       `${this.api}/auth/send-otp/${encodeURIComponent(purpose)}`,
       { email },
     );
   }
 
-  verifyOtp(
-    purpose: 'Email Confirmation' | 'Password Recovery',
-    data: { email: string; otp: string },
-  ) {
-    return this.http
-      .post<any>(
-        `${this.api}/auth/verify-otp/${encodeURIComponent(purpose)}`,
-        data,
-      )
-      .pipe(
-        tap((res) => {
-          if (purpose === 'Email Confirmation' && res?.data?.user) {
-            this.userSubject.next(res.data.user);
-            this.me$ = undefined;
-          }
-        }),
-      );
+  verifyOtp(purpose: string, data: { email: string; otp: string }) {
+    return this.http.post(`${this.api}/auth/verify-otp/${purpose}`, data);
   }
 
-  resetPassword(data: {
-    email: string;
-    resetToken: string;
-    password: string;
-    passwordConfirm: string;
-  }) {
-    return this.http.patch<any>(`${this.api}/auth/reset-password`, data).pipe(
-      tap((res) => {
-        if (res?.data?.user) {
-          this.userSubject.next(res.data.user);
-          this.me$ = undefined;
-        }
-      }),
-    );
+  verifyEmail(otp: string) {
+    return this.http.patch(`${this.api}/auth/verify-email`, { otp });
+  }
+
+  resetPassword(data: any) {
+    return this.http.patch(`${this.api}/auth/reset-password`, data);
   }
 
   getErrorMessage(err: any): string {

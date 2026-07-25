@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../../environments/environment';
 
 export interface TaskStats {
   totalTasks: number;
@@ -32,8 +31,8 @@ export interface RoomsResponse {
 @Injectable({ providedIn: 'root' })
 export class HomeService {
   private http = inject(HttpClient);
-  private baseUrl = environment.apiUrl;
-  
+  private baseUrl = '/api/v1';
+
   getTaskStats(): Observable<TaskStats> {
     return this.http.get<TaskStats>(`${this.baseUrl}/tasks/stats/me`);
   }

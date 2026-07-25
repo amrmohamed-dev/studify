@@ -5,12 +5,11 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { RoomService } from '../../core/services/room.service';
-import { Room, RoomView, toRoomView } from '../../core/models/room.model';
-import { AuthService } from '../../core/services/auth.service';
+import { Room, RoomStatus } from '../../core/models/room.model';
 
 import { FooterComponent } from '../../shared/components/footer/footer.component';
 import { io, Socket } from 'socket.io-client';
-import { environment } from '../../../environments/environment';
+import { environment } from '../../../environment';
 import { Subscription } from 'rxjs';
 
 type FilterTab = 'all' | 'my' | 'public' | 'private' | 'favourites';
@@ -31,8 +30,8 @@ type ViewMode = 'grid' | 'list';
   styleUrls: ['./all-rooms.component.scss'],
 })
 export class AllRoomsComponent implements OnInit, OnDestroy {
-  allRooms: RoomView[] = [];
-  filteredRooms: RoomView[] = [];
+  allRooms: Room[] = [];
+  filteredRooms: Room[] = [];
 
   searchQuery = '';
   activeFilter: FilterTab = 'all';
@@ -46,11 +45,7 @@ export class AllRoomsComponent implements OnInit, OnDestroy {
   private socket: Socket;
   private socketSub?: Subscription;
 
-  constructor(
-    private roomService: RoomService,
-    private router: Router,
-    private authService: AuthService,
-  ) {
+  constructor(private roomService: RoomService, private router: Router) {
     this.socket = io(environment.socketUrl);
   }
 
@@ -66,9 +61,7 @@ export class AllRoomsComponent implements OnInit, OnDestroy {
 
   private fetchRooms(): void {
     this.roomService.getRooms({ page: this.currentPage, limit: this.pageSize, search: this.searchQuery }).subscribe(res => {
-      const rooms: Room[] = res.data.rooms;
-      const currentUserId = this.authService.getCurrentUserId();
-      this.allRooms = rooms.map(room => toRoomView(room, currentUserId));
+      this.allRooms = res.data;
       this.applyFilter();
       this.calculatePagination();
     });
@@ -114,7 +107,12 @@ export class AllRoomsComponent implements OnInit, OnDestroy {
 
     if (this.searchQuery.trim()) {
       const q = this.searchQuery.toLowerCase();
-      rooms = rooms.filter(r => r.name.toLowerCase().includes(q));
+      rooms = rooms.filter(
+        r =>
+          r.name.toLowerCase().includes(q) ||
+          (r.description && r.description.toLowerCase().includes(q)) ||
+          (r.tags && r.tags.some(t => t.toLowerCase().includes(q)))
+      );
     }
 
     this.filteredRooms = rooms;
@@ -132,21 +130,21 @@ export class AllRoomsComponent implements OnInit, OnDestroy {
     this.pageNumbers = Array.from({ length: this.totalPages }, (_, i) => i + 1);
   }
 
-onJoinRoom(room: RoomView): void {
+onJoinRoom(room: Room): void {
   this.router.navigate(['/rooms/join'], {
     queryParams: { room: room._id }
   });
 }
 
-  onViewRoom(room: RoomView): void {
+  onViewRoom(room: Room): void {
     this.router.navigate(['/rooms', room._id]);
   }
 
-  onRequestInvite(room: RoomView): void {
+  onRequestInvite(room: Room): void {
     this.router.navigate(['/request-sent']);
   }
 
-  onToggleBookmark(room: RoomView): void {
+  onToggleBookmark(room: Room): void {
     room.isFavourite = !room.isFavourite;
   }
 

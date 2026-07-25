@@ -1,11 +1,9 @@
-import { Component, DestroyRef, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
-
-const RESEND_COOLDOWN_SECONDS = 30;
 
 @Component({
   selector: 'app-otp-page',
@@ -13,7 +11,7 @@ const RESEND_COOLDOWN_SECONDS = 30;
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './otp-page.component.html',
 })
-export class OtpPageComponent implements OnInit, OnDestroy {
+export class OtpPageComponent implements OnInit {
   private fb = inject(FormBuilder);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -25,10 +23,6 @@ export class OtpPageComponent implements OnInit, OnDestroy {
   success = '';
   purpose = 'email-confirmation';
   email = '';
-
-  resending = false;
-  resendCooldown = 0;
-  private cooldownIntervalId: ReturnType<typeof setInterval> | null = null;
 
   otpForm = this.fb.nonNullable.group({
     otp: [
@@ -49,16 +43,6 @@ export class OtpPageComponent implements OnInit, OnDestroy {
     this.email = this.route.snapshot.queryParamMap.get('email') || '';
   }
 
-  ngOnDestroy(): void {
-    this.stopCooldown();
-  }
-
-  private get backendPurpose(): 'Email Confirmation' | 'Password Recovery' {
-    return this.purpose === 'password-recovery'
-      ? 'Password Recovery'
-      : 'Email Confirmation';
-  }
-
   submit() {
     if (this.otpForm.invalid) {
       this.otpForm.markAllAsTouched();
@@ -72,8 +56,33 @@ export class OtpPageComponent implements OnInit, OnDestroy {
 
     const otp = this.otpForm.getRawValue().otp;
 
+    if (this.purpose === 'password-recovery') {
+      this.authService
+        .verifyOtp('Password Recovery', { email: this.email, otp })
+        .pipe(
+          takeUntilDestroyed(this.destroyRef),
+          finalize(() => {
+            this.loading = false;
+            this.otpForm.enable();
+          }),
+        )
+        .subscribe({
+          next: () => {
+            this.success = 'OTP verified. Redirecting...';
+            this.router.navigate(['/reset-password'], {
+              queryParams: { email: this.email, otp },
+            });
+          },
+          error: (err) => {
+            this.error = this.authService.getErrorMessage(err);
+          },
+        });
+
+      return;
+    }
+
     this.authService
-      .verifyOtp(this.backendPurpose, { email: this.email, otp })
+      .verifyEmail(otp)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => {
@@ -82,61 +91,13 @@ export class OtpPageComponent implements OnInit, OnDestroy {
         }),
       )
       .subscribe({
-        next: (res: any) => {
-          if (this.purpose === 'password-recovery') {
-            this.success = 'OTP verified. Redirecting...';
-            this.router.navigate(['/reset-password'], {
-              state: { email: this.email, resetToken: res.resetToken },
-            });
-            return;
-          }
-
-          this.success = 'Email verified successfully. Redirecting...';
-          this.router.navigate(['/home']);
-        },
-        error: (err) => {
-          this.error = this.authService.getErrorMessage(err);
-        },
-      });
-  }
-
-  resendOtp() {
-    if (this.resending || this.resendCooldown > 0 || !this.email) return;
-
-    this.resending = true;
-    this.error = '';
-    this.success = '';
-
-    this.authService
-      .sendOtp(this.backendPurpose, this.email)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => (this.resending = false)),
-      )
-      .subscribe({
         next: () => {
-          this.success = 'A new code has been sent to your email.';
-          this.startCooldown();
+          this.success = 'Email verified successfully. Redirecting...';
+          this.router.navigate(['/login']);
         },
         error: (err) => {
           this.error = this.authService.getErrorMessage(err);
         },
       });
-  }
-
-  private startCooldown() {
-    this.resendCooldown = RESEND_COOLDOWN_SECONDS;
-    this.stopCooldown();
-    this.cooldownIntervalId = setInterval(() => {
-      this.resendCooldown -= 1;
-      if (this.resendCooldown <= 0) this.stopCooldown();
-    }, 1000);
-  }
-
-  private stopCooldown() {
-    if (this.cooldownIntervalId !== null) {
-      clearInterval(this.cooldownIntervalId);
-      this.cooldownIntervalId = null;
-    }
   }
 }
