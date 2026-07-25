@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Room } from '../../../core/models/room.model';
+import { RoomView } from '../../../core/models/room.model';
 
 @Component({
   selector: 'app-room-card',
@@ -10,15 +10,13 @@ import { Room } from '../../../core/models/room.model';
   styleUrls: ['./room-card.component.scss']
 })
 export class RoomCardComponent {
-  @Input() room!: Room;
+  @Input() room!: RoomView;
 
-  // Outputs لكل الأحداث اللي parent هيستقبلها
-  @Output() joinRoom = new EventEmitter<Room>();
-  @Output() viewRoom = new EventEmitter<Room>();
-  @Output() requestInvite = new EventEmitter<Room>();
-  @Output() toggleBookmark = new EventEmitter<Room>();
+  @Output() joinRoom = new EventEmitter<RoomView>();
+  @Output() viewRoom = new EventEmitter<RoomView>();
+  @Output() requestInvite = new EventEmitter<RoomView>();
+  @Output() toggleBookmark = new EventEmitter<RoomView>();
 
-  // Methods لإطلاق الـ events
   onJoinRoom() {
     this.joinRoom.emit(this.room);
   }

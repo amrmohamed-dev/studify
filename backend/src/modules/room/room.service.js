@@ -74,10 +74,10 @@ const updateRoom = async ({ room, data, file }) => {
   if (data.password) room.password = data.password;
   if (
     data.maxMembers &&
-    typeof +data.maxMembers === 'number' &&
-    room.members.length <= data.maxMembers
+    !Number.isNaN(+data.maxMembers) &&
+    room.members.length <= +data.maxMembers
   )
-    room.maxMembers = data.maxMembers;
+    room.maxMembers = +data.maxMembers;
 
   if (file) {
     const upload = await cloudinaryService.uploadToCloudinary(

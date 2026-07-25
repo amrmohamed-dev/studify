@@ -58,6 +58,21 @@
       </div>
     </form>
 
+    <div class="auth-actions">
+      <button
+        type="button"
+        class="btn-secondary"
+        (click)="resendOtp()"
+        [disabled]="resending || resendCooldown > 0"
+      >
+        @if (resendCooldown > 0) {
+          Resend code ({{ resendCooldown }}s)
+        } @else {
+          {{ resending ? "Sending..." : "Resend code" }}
+        }
+      </button>
+    </div>
+
     <div class="auth-links">
       <a routerLink="/login">Back to login</a>
       <a routerLink="/register">Create another account</a>

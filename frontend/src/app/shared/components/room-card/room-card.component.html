@@ -1,7 +1,7 @@
 <div class="room-card page-card">
   <div class="room-image">
     <img
-      [src]="room.image || 'assets/images/room-placeholder.jpg'"
+     [src]="room.imageUrl || 'assets/images/room-placeholder.jpg'"
       alt="room"
     />
    <span class="room-type" [class.private]="room.status === 'private'">

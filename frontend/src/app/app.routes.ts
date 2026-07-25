@@ -29,7 +29,7 @@ export const routes: Routes = [
 
   {
     path: 'rooms',
-    
+
     loadComponent: () =>
       import('./features/all-rooms/all-rooms.component')
         .then(m => m.AllRoomsComponent),
@@ -38,7 +38,7 @@ export const routes: Routes = [
 
   {
     path: 'rooms/join',
-    
+
     loadComponent: () =>
       import('./features/join-room/join-room.component')
         .then(m => m.JoinRoomComponent),
@@ -66,6 +66,14 @@ export const routes: Routes = [
       actionLink: '/rooms',
     },
   },
+  {
+  path: 'rooms/create',
+  canActivate: [authGuard],
+  loadComponent: () =>
+    import('./features/create-room/create-room.component')
+      .then(m => m.CreateRoomComponent),
+},
+
   {
     path: 'rooms/:roomId',
     canActivate: [authGuard,roomGuard],
@@ -166,7 +174,7 @@ export const routes: Routes = [
       import('./features/auth/pages/reset-password-page/reset-password-page.component')
         .then((m) => m.ResetPasswordPageComponent),
   },
-  
+
   {
     path: '**',
     redirectTo: 'home',

@@ -25,6 +25,7 @@ export interface User {
   _id: string;
   name: string;
   email: string;
+  isVerified?: boolean;
   image?: ImageAsset;
   favouriteRooms?: FavouriteRoom[];
   createdAt?: string;

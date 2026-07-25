@@ -3,6 +3,8 @@ import catchAsync from '../../utils/error/catchAsync.js';
 import AppError from '../../utils/error/appError.js';
 import * as authService from './auth.service.js';
 
+const OTP_PURPOSES = ['Email Confirmation', 'Password Recovery'];
+
 const register = catchAsync(async (req, res, next) => {
   const { name, email, password } = req.body;
   const existingUser = await User.findOne({ email });
@@ -19,82 +21,54 @@ const register = catchAsync(async (req, res, next) => {
     email,
     password,
   });
+
+  let otpSent = true;
+  try {
+    await authService.sendOtpEmail(user, 'Email Confirmation');
+  } catch (err) {
+    otpSent = false;
+  }
+
   authService.createSendToken(
     user,
     201,
     res,
-    'Your account created successfully!',
+    otpSent
+      ? 'Your account was created successfully! Please check your email for the verification code.'
+      : 'Your account was created, but we could not send the verification email. Please request a new code.',
   );
 });
 
 const sendOtp = catchAsync(async (req, res, next) => {
   const { purpose } = req.params;
-  const responseMessage = 'If an OTP was sent, please check your email.';
+  const { email } = req.body;
+  const responseMessage =
+    'If an account exists for this email, an OTP has been sent.';
 
-  const otpConfigs = {
-    'Email Confirmation': {
-      requireAuth: true,
-      findUser: async () => await User.findById(req.user._id),
-      condition: (user) => user.isVerified,
-      errorMsg: 'Your account is already verified.',
-      sendToken: true,
-    },
-    'Password Recovery': {
-      requireAuth: false,
-      findUser: async () => await User.findOne({ email: req.body.email }),
-      condition: (user) => !user,
-      errorMsg: null,
-      sendToken: false,
-    },
-  };
+  if (!OTP_PURPOSES.includes(purpose)) {
+    return next(new AppError('Invalid OTP purpose.', 400));
+  }
 
-  const config = otpConfigs[purpose];
-  if (!config) return next(new AppError('Invalid OTP purpose.', 400));
+  if (!email) {
+    return next(new AppError('Email is required.', 400));
+  }
 
-  const user = await config.findUser();
+  const user = await User.findOne({ email });
 
-  if (config.condition(user)) {
+  if (!user) {
     if (purpose === 'Password Recovery') {
-      return res.status(200).json({
-        status: 'success',
-        message: responseMessage,
-      });
+      return res.status(200).json({ status: 'success', message: responseMessage });
     }
-    return next(new AppError(config.errorMsg, 400));
+    return next(new AppError('No account found for this email.', 404));
+  }
+
+  if (purpose === 'Email Confirmation' && user.isVerified) {
+    return next(new AppError('Your account is already verified.', 400));
   }
 
   await authService.sendOtpEmail(user, purpose);
-  const responseBody = {
-    status: 'success',
-    message: responseMessage,
-  };
 
-  if (config.sendToken) {
-    return authService.createSendToken(user, 200, res, responseMessage);
-  }
-
-  res.status(200).json(responseBody);
-});
-
-const verifyEmail = catchAsync(async (req, res, next) => {
-  const { email } = req.user;
-  const { otp } = req.body;
-  const user = await authService.verifyOtp(
-    email,
-    otp,
-    'Email Confirmation',
-  );
-
-  user.isVerified = true;
-  user.otp = {};
-  await user.save({ validateBeforeSave: false });
-
-  authService.createSendToken(
-    user,
-    200,
-    res,
-    'Email confirmed successfully!',
-  );
+  res.status(200).json({ status: 'success', message: responseMessage });
 });
 
 const login = catchAsync(async (req, res, next) => {
@@ -106,25 +80,49 @@ const login = catchAsync(async (req, res, next) => {
   authService.createSendToken(user, 200, res, 'Logged in successfully!');
 });
 
+// Handles verification for both purposes, working purely off {email, otp}
+// so it never depends on the caller already having a session cookie.
 const verifyOtp = catchAsync(async (req, res, next) => {
   const { email, otp } = req.body;
   const { purpose } = req.params;
-  await authService.verifyOtp(email, otp, purpose);
+
+  if (!OTP_PURPOSES.includes(purpose)) {
+    return next(new AppError('Invalid OTP purpose.', 400));
+  }
+
+  if (purpose === 'Email Confirmation') {
+    const user = await authService.verifyOtp(email, otp, purpose);
+    user.isVerified = true;
+    user.clearOtp();
+    await user.save({ validateBeforeSave: false });
+
+    return authService.createSendToken(
+      user,
+      200,
+      res,
+      'Email confirmed successfully!',
+    );
+  }
+
+  // Password Recovery: consume the original OTP and hand back a fresh,
+  // short-lived reset token for the next step instead.
+  const { resetToken } = await authService.issueResetToken(email, otp);
+
   res.status(200).json({
     status: 'success',
     message: 'OTP verified successfully',
+    resetToken,
   });
 });
 
 const resetPassword = catchAsync(async (req, res, next) => {
-  const { email, otp } = req.body;
+  const { email, resetToken, password } = req.body;
   const user = await authService.verifyOtp(
     email,
-    otp,
+    resetToken,
     'Password Recovery',
   );
-  user.otp = {};
-  const { password } = req.body;
+  user.clearOtp();
   user.password = password;
   if (!user.isVerified) user.isVerified = true;
   await user.save();
@@ -160,8 +158,8 @@ const updateMyPassword = catchAsync(async (req, res, next) => {
 const logout = (req, res) => {
   res.clearCookie('jwt', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+    secure: process.env.NODE_ENV !== 'development',
+    sameSite: process.env.NODE_ENV !== 'development' ? 'None' : 'Lax',
   });
   res.status(200).json({
     status: 'success',
@@ -171,7 +169,6 @@ const logout = (req, res) => {
 export {
   register,
   sendOtp,
-  verifyEmail,
   login,
   verifyOtp,
   resetPassword,

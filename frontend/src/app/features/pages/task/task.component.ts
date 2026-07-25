@@ -2,6 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-task',
@@ -14,6 +15,8 @@ export class TaskComponent implements OnInit {
   @Input() roomId: string = "69c2897795a417877ea5988f";
   @Input() userId: string = "69c252e40612a88f47ea9339";
 
+  private readonly API = environment.apiUrl;
+
   tasks: any[] = [];
   newTaskTitle = '';
 
@@ -25,7 +28,7 @@ export class TaskComponent implements OnInit {
 
   loadTasks() {
     this.http
-      .get<any>(`/api/v1/rooms/${this.roomId}/tasks`)
+      .get<any>(`${this.API}/rooms/${this.roomId}/tasks`)
       .subscribe({
         next: (res) => this.tasks = res.data?.tasks || [],
         error: (err) => console.error('Load tasks error:', err)
@@ -37,12 +40,12 @@ export class TaskComponent implements OnInit {
 
     const payload = {
       title: this.newTaskTitle,
-      room: this.roomId,        // لازم يبقى موجود
-      createdBy: this.userId,   // لازم يبقى موجود
+      room: this.roomId,
+      createdBy: this.userId,
     };
 
     this.http
-      .post<any>(`/api/v1/rooms/${this.roomId}/tasks`, payload)
+      .post<any>(`${this.API}/rooms/${this.roomId}/tasks`, payload)
       .subscribe({
         next: (res) => {
           this.tasks.push(res.data.task);
@@ -54,7 +57,7 @@ export class TaskComponent implements OnInit {
 
   toggleTask(task: any) {
     this.http
-      .patch<any>(`/api/v1/tasks/${task._id}/toggle`, {})
+      .patch<any>(`${this.API}/tasks/${task._id}/toggle`, {})
       .subscribe({
         next: (res) => {
           const index = this.tasks.findIndex((t) => t._id === task._id);
@@ -66,7 +69,7 @@ export class TaskComponent implements OnInit {
 
   updateTask(taskId: string, newTitle: string) {
     this.http
-      .put<any>(`/api/v1/tasks/${taskId}`, { title: newTitle })
+      .patch<any>(`${this.API}/tasks/${taskId}`, { title: newTitle })
       .subscribe({
         next: (res) => {
           const index = this.tasks.findIndex((t) => t._id === taskId);
@@ -78,7 +81,7 @@ export class TaskComponent implements OnInit {
 
   deleteTask(taskId: string) {
     this.http
-      .delete(`/api/v1/tasks/${taskId}`)
+      .delete(`${this.API}/tasks/${taskId}`)
       .subscribe({
         next: () => this.tasks = this.tasks.filter((t) => t._id !== taskId),
         error: (err) => console.error('Delete task error:', err)

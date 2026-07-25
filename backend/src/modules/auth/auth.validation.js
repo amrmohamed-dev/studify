@@ -16,11 +16,11 @@ const registerSchema = joi.object({
 
   password: joi
     .string()
-    .pattern(/^[a-zA-Z0-9]{8,30}$/)
+    .pattern(/^\S{8,30}$/)
     .required()
     .messages({
       'string.pattern.base':
-        'Password must be 8-30 characters and contain only letters and numbers.',
+        'Password must be 8-30 characters with no spaces.',
       'string.empty': 'Password is required.',
       'any.required': 'Password is required.',
     }),
@@ -45,11 +45,11 @@ const loginSchema = joi.object({
 
   password: joi
     .string()
-    .pattern(/^[a-zA-Z0-9]{8,30}$/)
+    .pattern(/^\S{8,30}$/)
     .required()
     .messages({
       'string.pattern.base':
-        'Password must be 8-30 characters and contain only letters and numbers.',
+        'Password must be 8-30 characters with no spaces.',
       'string.empty': 'Password is required.',
       'any.required': 'Password is required.',
     }),
@@ -62,18 +62,18 @@ const resetPasswordSchema = joi.object({
     'any.required': 'Email is required.',
   }),
 
-  otp: joi.string().required().messages({
-    'string.empty': 'OTP is required.',
-    'any.required': 'OTP is required.',
+  resetToken: joi.string().required().messages({
+    'string.empty': 'Reset token is required.',
+    'any.required': 'Reset token is required.',
   }),
 
   password: joi
     .string()
-    .pattern(/^[a-zA-Z0-9]{8,30}$/)
+    .pattern(/^\S{8,30}$/)
     .required()
     .messages({
       'string.pattern.base':
-        'Password must be 8-30 characters and contain only letters and numbers.',
+        'Password must be 8-30 characters with no spaces.',
       'string.empty': 'Password is required.',
       'any.required': 'Password is required.',
     }),

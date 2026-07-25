@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface RoomMember {
   _id: string;
@@ -29,7 +30,7 @@ export interface Room {
 
 @Injectable({ providedIn: 'root' })
 export class RoomService {
-  private readonly API = '/api/v1/rooms';
+  private readonly API = `${environment.apiUrl}/rooms`;
 
   constructor(private http: HttpClient) {}
 
@@ -39,7 +40,6 @@ export class RoomService {
       .pipe(map((res) => res.data.room));
   }
 
-  /** Returns owner + all members as a flat RoomMember array */
   getRoomMembers(roomId: string): Observable<RoomMember[]> {
     return this.http
       .get<{
@@ -70,7 +70,6 @@ export class RoomService {
     return this.http.patch<void>(`${this.API}/${roomId}/members/${userId}/approve`, {});
   }
 
-  /** Reject a pending join request */
   rejectMember(roomId: string, userId: string): Observable<void> {
     return this.http.delete<void>(`${this.API}/${roomId}/pending/${userId}`);
   }
@@ -79,54 +78,44 @@ export class RoomService {
     return this.http.delete<void>(`${this.API}/${roomId}/members/me`);
   }
 
-  /** Checks whether the current user is a member of the given room */
-  isMember(roomId: string): Observable<boolean> {
-    return this.getRoomMembers(roomId).pipe(map(() => true));
-import { environment } from '../../../environment';
-import { Room, ApiResponse } from '../models/room.model';
-import { Observable } from 'rxjs';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class RoomService {
-  private baseUrl = environment.apiUrl + '/rooms';
-
-  constructor(private http: HttpClient) {}
-
-  getRooms(params?: {
-    page?: number;
-    limit?: number;
-    search?: string;
-    type?: 'public' | 'private';
-    favourites?: boolean;
-  }): Observable<ApiResponse<Room[]>> {
-    return this.http.get<ApiResponse<Room[]>>(this.baseUrl, { params: params as any });
+  getRooms(params?: { page?: number; limit?: number; search?: string }): Observable<any> {
+    return this.http.get<any>(this.API, { params: params as any });
   }
 
+  getRoomById(roomId: string): Observable<any> {
+    return this.http.get<any>(`${this.API}/${roomId}`);
+  }
+
+  updateRoom(roomId: string, data: any): Observable<any> {
+    return this.http.patch<any>(`${this.API}/${roomId}`, data);
+  }
 
   joinRoom(roomId: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/${roomId}/join`, {});
+    return this.http.post<any>(`${this.API}/${roomId}/join`, {});
   }
 
-  getMembers(roomId: string): Observable<ApiResponse<any>> {
-    return this.http.get<ApiResponse<any>>(`${this.baseUrl}/${roomId}/members`);
-  }
-
-  getPending(roomId: string): Observable<ApiResponse<any>> {
-    return this.http.get<ApiResponse<any>>(`${this.baseUrl}/${roomId}/pending`);
-  }
-
-  approveMember(roomId: string, userId: string): Observable<any> {
-    return this.http.patch(`${this.baseUrl}/${roomId}/members/${userId}/approve`, {});
-  }
-
-  rejectMember(roomId: string, userId: string): Observable<any> {
-    return this.http.get(`${this.baseUrl}/${roomId}/members/${userId}/reject`);
-  }
-
-
-  removeMember(roomId: string, userId: string): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/${roomId}/members/${userId}`);
+  createRoom(data: {
+    name: string;
+    privacyType: 'public' | 'private_request' | 'private_password';
+    password?: string;
+    maxMembers?: number;
+    image?: File;
+  }): Observable<{ status: string; data: { room: Room } }> {
+    const formData = new FormData();
+    formData.append('name', data.name);
+    formData.append('privacyType', data.privacyType);
+    if (data.privacyType === 'private_password' && data.password) {
+      formData.append('password', data.password);
+    }
+    if (data.maxMembers) {
+      formData.append('maxMembers', String(data.maxMembers));
+    }
+    if (data.image) {
+      formData.append('image', data.image);
+    }
+    return this.http.post<{ status: string; data: { room: Room } }>(
+      this.API,
+      formData,
+    );
   }
 }
