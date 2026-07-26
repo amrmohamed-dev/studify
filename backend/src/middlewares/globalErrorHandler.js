@@ -65,26 +65,22 @@ const globalErrorHandler = (err, req, res, next) => {
   const { NODE_ENV } = process.env;
   if (NODE_ENV === 'development') {
     sendErrorDev(err, req, res);
-    return;
+  } else if (NODE_ENV === 'production') {
+    let error = Object.create(err);
+
+    if (error.name === 'CastError') error = handleCastErrorDB(error);
+    if (error.code === 11000 || error.cause?.code === 11000)
+      error = handleDuplicateErrorDB(error.cause || error);
+    if (error.name === 'ValidationError')
+      error = handleValidationErrorDB(error);
+    if (error.name === 'JsonWebTokenError') error = handlejwtError();
+    if (error.name === 'TokenExpiredError')
+      error = handlejwtExpiredError();
+    if (error.name === 'MulterError' && error.code === 'LIMIT_FILE_SIZE')
+      error = handleFileSizeError();
+
+    sendErrorProd(error, req, res);
   }
-
-  // Anything that isn't explicitly 'development' (including an unset
-  // NODE_ENV, common on platforms like Railway unless you set it yourself)
-  // falls back to safe production behavior instead of never responding.
-  let error = Object.create(err);
-
-  if (error.name === 'CastError') error = handleCastErrorDB(error);
-  if (error.code === 11000 || error.cause?.code === 11000)
-    error = handleDuplicateErrorDB(error.cause || error);
-  if (error.name === 'ValidationError')
-    error = handleValidationErrorDB(error);
-  if (error.name === 'JsonWebTokenError') error = handlejwtError();
-  if (error.name === 'TokenExpiredError')
-    error = handlejwtExpiredError();
-  if (error.name === 'MulterError' && error.code === 'LIMIT_FILE_SIZE')
-    error = handleFileSizeError();
-
-  sendErrorProd(error, req, res);
 };
 
 export default globalErrorHandler;

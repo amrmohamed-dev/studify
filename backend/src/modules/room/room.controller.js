@@ -33,20 +33,7 @@ const getOneRoom = catchAsync(async (req, res, next) => {
 });
 
 const getAllRooms = catchAsync(async (req, res, next) => {
-  const query = { ...req.query };
-
-  if (query.members) {
-    if (typeof query.members !== 'string' || !/^[0-9a-fA-F]{24}$/.test(query.members)) {
-      return next(new AppError('Invalid members id.', 400));
-    }
-    query.$or = [
-      { 'members.user': query.members },
-      { createdBy: query.members },
-    ];
-    delete query.members;
-  }
-  
-  const { rooms, meta } = await roomService.getAllRooms(query);
+  const { rooms, meta } = await roomService.getAllRooms(req.query);
 
   res.status(200).json({
     status: 'success',
@@ -56,7 +43,7 @@ const getAllRooms = catchAsync(async (req, res, next) => {
 });
 
 const updateRoom = catchAsync(async (req, res, next) => {
-  const room = await Room.findById(req.params.id).select('+password');
+  const room = await Room.findById(req.params.id);
 
   if (!room) return next(new AppError('Room not found', 404));
 

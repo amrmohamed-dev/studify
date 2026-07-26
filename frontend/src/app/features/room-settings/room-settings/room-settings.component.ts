@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { RoomService } from '../../../core/services/room.service';
+import { RoomService } from '../../services/room.service';
 
 interface RoomSettings {
   name: string;

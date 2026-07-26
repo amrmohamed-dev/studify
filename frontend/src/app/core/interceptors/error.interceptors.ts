@@ -7,7 +7,7 @@ import { AuthService } from '../services/auth.service';
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
-  const isApiRequest = req.url.includes('/api/');
+  const isApiRequest = req.url.startsWith('/api/');
   const request = isApiRequest ? req.clone({ withCredentials: true }) : req;
   const isAuthRequest = request.url.includes('/auth/');
 

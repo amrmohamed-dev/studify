@@ -19,7 +19,7 @@ class APIFeatures {
     return this;
   }
 
- filter(allowedFields = []) {
+  filter() {
     const queryObj = { ...this.query };
     const excludedFileds = [
       'page',
@@ -30,34 +30,13 @@ class APIFeatures {
       'searchFields',
     ];
     excludedFileds.forEach((f) => delete queryObj[f]);
-
-    const safeOperators = ['lt', 'lte', 'gt', 'gte', 'eq', 'ne'];
-    const sanitized = {};
-
-    Object.keys(queryObj).forEach((key) => {
-      if (key.startsWith('$')) return;
-      if (!allowedFields.includes(key)) return;
-
-      const value = queryObj[key];
-
-      if (value && typeof value === 'object') {
-        const cleanOps = {};
-        Object.keys(value).forEach((op) => {
-          const bareOp = op.replace(/^\$/, '');
-          if (safeOperators.includes(bareOp)) {
-            cleanOps[`$${bareOp}`] = value[op];
-          }
-        });
-        if (Object.keys(cleanOps).length) sanitized[key] = cleanOps;
-        return;
-      }
-
-      if (typeof value === 'string' || typeof value === 'number') {
-        sanitized[key] = value;
-      }
-    });
-
-    this.mongooseQuery.find(sanitized);
+    let queryStr = JSON.stringify(queryObj);
+    queryStr = queryStr.replace(
+      /\b(lt|lte|gt|gte|eq|ne)\b/g,
+      (match) => `$${match}`,
+    );
+    const filter = JSON.parse(queryStr);
+    this.mongooseQuery.find(filter);
     return this;
   }
 

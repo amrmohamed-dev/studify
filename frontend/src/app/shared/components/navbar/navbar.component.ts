@@ -1,12 +1,7 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import {
-  NotificationService,
-  AppNotification,
-} from '../../../core/services/notification.service';
-import { SocketService } from '../../../core/services/socket.service';
 import {
   LucideAngularModule,
   Users,
@@ -24,7 +19,7 @@ import {
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss',
 })
-export class NavbarComponent implements OnInit, OnDestroy {
+export class NavbarComponent {
   icons = {
     home: House,
     rooms: LayoutDashboard,
@@ -39,40 +34,18 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   user$ = this.auth.user$;
 
-  notifications: AppNotification[] = [];
-  unreadCount = 0;
+  notifications = [
+    { _id: 1, message: 'Omar replied in the JavaScript room.' },
+    { _id: 2, message: 'Mariam sent you a friend request.' },
+  ];
 
   constructor(
     public auth: AuthService,
     private router: Router,
-    private notificationService: NotificationService,
-    private socketService: SocketService,
   ) {
     this.router.events.subscribe(() => {
       this.closeMenu();
     });
-  }
-
-  ngOnInit(): void {
-    if (!this.auth.isLoggedIn()) return;
-
-    this.notificationService.fetchNotifications().subscribe();
-
-    this.notificationService.notifications$.subscribe((list) => {
-      this.notifications = list.slice(0, 5);
-    });
-
-    this.notificationService.unreadCount$.subscribe((count) => {
-      this.unreadCount = count;
-    });
-
-    this.socketService.onNewNotification(({ notification }) => {
-      this.notificationService.addIncoming(notification);
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.socketService.removeNotificationListener();
   }
 
   toggleMenu() {

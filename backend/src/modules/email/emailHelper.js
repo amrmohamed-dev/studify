@@ -5,9 +5,7 @@ const createSendEmail = async (options, user) => {
   try {
     await sendEmail(options);
     return true;
-  } catch (err) {
-
-     console.error('OTP email send failed |', err);
+  } catch {
     user.set('otp.code', undefined);
     user.set('otp.expires', undefined);
     user.set('otp.purpose', undefined);

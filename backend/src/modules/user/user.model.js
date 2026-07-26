@@ -19,7 +19,6 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      select: false,
       minlength: [8, 'Password must be at least 8 characters.'],
       maxlength: [30, 'Password must not exceed 30 characters.'],
       required: [true, 'Password is required.'],
@@ -53,11 +52,9 @@ const userSchema = new mongoose.Schema(
       },
     ],
     otp: {
-      type: {
-        code: String,
-        expires: Date,
-        purpose: String, //Email Confirmation or Password Recovery
-      },
+      code: String,
+      expires: Date,
+      purpose: String, //Email Confirmation or Password Recovery
       default: {},
     },
     isVerified: {
@@ -73,6 +70,7 @@ const userSchema = new mongoose.Schema(
 const hiddenFields = (doc, ret) => {
   delete ret.__v;
   delete ret.updatedAt;
+  delete ret.isVerified;
   delete ret.password;
   delete ret.passwordChangedAt;
   delete ret.otp;
@@ -111,24 +109,6 @@ userSchema.methods.generateOtp = function (otpPurpose) {
   this.otp.expires = Date.now() + 10 * 60 * 1000;
   this.otp.purpose = otpPurpose;
   return otp;
-};
-
-// Consumes/invalidates whatever OTP or reset token is currently stored.
-userSchema.methods.clearOtp = function () {
-  this.set('otp.code', undefined);
-  this.set('otp.expires', undefined);
-  this.set('otp.purpose', undefined);
-};
-
-// Issues a short-lived, cryptographically random one-time token used to
-// authorize the "set new password" step right after an OTP has been
-// verified, instead of re-using/re-exposing the original 6-digit OTP.
-userSchema.methods.generateResetToken = function () {
-  const token = crypto.randomBytes(32).toString('hex');
-  this.otp.code = crypto.createHash('sha256').update(token).digest('hex');
-  this.otp.expires = Date.now() + 10 * 60 * 1000;
-  this.otp.purpose = 'Password Recovery';
-  return token;
 };
 
 userSchema.methods.changedPasswordAfter = function (jwtIat) {

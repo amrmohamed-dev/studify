@@ -1,3 +1,4 @@
+
 export interface ApiResponse<T> {
   message: string;
   data: T;
@@ -18,12 +19,6 @@ export interface User {
 
 export type RoomStatus = 'public' | 'private';
 
-export interface RoomMember {
-  _id: string;
-  user: User;
-  joinedAt?: string;
-}
-
 export interface Room {
   _id: string;
   name: string;
@@ -31,16 +26,10 @@ export interface Room {
   image?: string;
 
   owner?: User;
-  createdBy?: User;
   membersCount?: number;
   status?: RoomStatus;
   tags?: string[];
   createdAt?: string;
-
-  maxMembers?: number;
-  privacyType?: 'public' | 'private_request' | 'private_password';
-  members?: RoomMember[];
-  pendingMembers?: any[];
 
   isFavourite?: boolean;
   isJoined?: boolean;

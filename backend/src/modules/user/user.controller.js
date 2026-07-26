@@ -163,14 +163,14 @@ const deleteProfilePhoto = catchAsync(async (req, res, next) => {
 });
 
 const getAllUsers = catchAsync(async (req, res, next) => {
- const features = new APIFeatures(
-  User.find({
-    _id: { $ne: req.user._id },
-  }),
-  req.query,
-)
-  .search()
-  .filter(['role']);
+  const features = new APIFeatures(
+    User.find({
+      _id: { $ne: req.user._id },
+    }),
+    req.query,
+  )
+    .search()
+    .filter();
 
   const countQuery = features.mongooseQuery.clone();
   const total = await countQuery.countDocuments();

@@ -160,7 +160,7 @@ leaveRoom(): void {
   // 1. نبلغ السيرفر إننا عايزين نخرج
   this.roomService.leaveRoom(this.roomId).subscribe({
     next: () => {
-      // مش محتاج تنادي navigateHome هنا لأن
+      // مش محتاج تنادي navigateHome هنا لأن 
       // الـ socketService.onMemberLeft هي اللي هتعمل ده
       console.log('Leave request sent');
     },
@@ -345,7 +345,7 @@ leaveRoom(): void {
     this.subscriptions.add(
       this.roomService.getRoom(this.roomId).subscribe({
         next: (room) => {
-        this.roomCreatedById = room.createdBy?._id ?? '';
+          this.roomCreatedById = room.createdBy._id;
           if (this.isAdmin) {
             this.loadPendingMembers();
           }
