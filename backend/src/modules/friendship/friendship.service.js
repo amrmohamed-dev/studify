@@ -41,6 +41,9 @@ const sendFriendRequest = async (requesterId, recipientId) => {
     if (existingFriendship.status === 'accepted') {
       throw new AppError('You are already friends.', 409);
     }
+    if (existingFriendship.status === 'pending') {
+      throw new AppError('A friend request is already pending.', 409);
+    }
   }
 
   const friendship = await Friendship.create({
@@ -135,11 +138,11 @@ const getFriends = async (currentUserId, query) => {
   };
 
   const features = new APIFeatures(
-    Friendship.find(match).populate(FRIEND_POPULATION),
-    query,
-  )
-    .filter()
-    .search([
+  Friendship.find(match).populate(FRIEND_POPULATION),
+  query,
+)
+  .filter([])
+  .search([...
       'requester.name',
       'recipient.name',
       'requester.email',

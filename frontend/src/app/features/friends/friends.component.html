@@ -1,0 +1,102 @@
+<app-navbar></app-navbar>
+
+<div class="friends-page">
+  <div class="friends-header">
+    <h1>Friends</h1>
+    <p>See your study network, connect with classmates, and collaborate.</p>
+  </div>
+
+  <div class="friends-tabs">
+    <button [class.active]="activeTab === 'friends'" (click)="setTab('friends')">
+      My Friends
+      <span class="badge" *ngIf="friends.length">{{ friends.length }}</span>
+    </button>
+    <button [class.active]="activeTab === 'requests'" (click)="setTab('requests')">
+      Requests
+      <span class="badge" *ngIf="requests.length">{{ requests.length }}</span>
+    </button>
+    <button [class.active]="activeTab === 'find'" (click)="setTab('find')">
+      Find People
+    </button>
+  </div>
+
+  <div class="feedback" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="feedback success" *ngIf="successMessage">{{ successMessage }}</div>
+
+  <!-- My Friends -->
+  <div class="friends-list" *ngIf="activeTab === 'friends'">
+    <p *ngIf="loadingFriends">Loading...</p>
+    <p *ngIf="!loadingFriends && friends.length === 0">
+      You don't have any friends yet. Try the "Find People" tab to add some.
+    </p>
+
+    <div class="person-card" *ngFor="let f of friends">
+      <img *ngIf="f.friend.image?.url" [src]="f.friend.image?.url" alt="{{ f.friend.name }}" />
+      <div class="avatar-fallback" *ngIf="!f.friend.image?.url">{{ getInitials(f.friend.name) }}</div>
+      <div class="person-info">
+        <span class="name">{{ f.friend.name }}</span>
+        <span class="email">{{ f.friend.email }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Requests -->
+  <div class="friends-list" *ngIf="activeTab === 'requests'">
+    <p *ngIf="loadingRequests">Loading...</p>
+    <p *ngIf="!loadingRequests && requests.length === 0">
+      No pending friend requests.
+    </p>
+
+    <div class="person-card" *ngFor="let r of requests">
+      <img *ngIf="r.requester.image?.url" [src]="r.requester.image?.url" alt="{{ r.requester.name }}" />
+      <div class="avatar-fallback" *ngIf="!r.requester.image?.url">{{ getInitials(r.requester.name) }}</div>
+      <div class="person-info">
+        <span class="name">{{ r.requester.name }}</span>
+        <span class="email">{{ r.requester.email }}</span>
+      </div>
+      <div class="actions">
+        <button class="accept" (click)="acceptRequest(r)">Accept</button>
+        <button class="reject" (click)="rejectRequest(r)">Reject</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Find People -->
+  <div class="friends-list" *ngIf="activeTab === 'find'">
+    <input
+      type="text"
+      class="search-input"
+      placeholder="Search by name or email..."
+      [ngModel]="searchQuery"
+      (ngModelChange)="onSearchChange($event)"
+    />
+
+    <p *ngIf="loadingSearch">Searching...</p>
+    <p *ngIf="!loadingSearch && searchQuery && searchResults.length === 0">
+      No users found.
+    </p>
+
+    <div class="person-card" *ngFor="let u of searchResults">
+      <img *ngIf="u.image?.url" [src]="u.image?.url" alt="{{ u.name }}" />
+      <div class="avatar-fallback" *ngIf="!u.image?.url">{{ getInitials(u.name) }}</div>
+      <div class="person-info">
+        <span class="name">{{ u.name }}</span>
+        <span class="email">{{ u.email }}</span>
+      </div>
+      <div class="actions">
+        <button
+          *ngIf="!isAlreadyFriend(u._id) && !isAlreadySent(u._id)"
+          (click)="sendRequest(u)"
+        >
+          Add Friend
+        </button>
+        <span class="tag" *ngIf="isAlreadyFriend(u._id)">Already friends</span>
+        <span class="tag" *ngIf="isAlreadySent(u._id) && !isAlreadyFriend(u._id)">
+          Request sent
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-footer></app-footer>

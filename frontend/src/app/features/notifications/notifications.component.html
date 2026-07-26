@@ -1,0 +1,37 @@
+<app-navbar></app-navbar>
+
+<div class="notifications-page">
+  <div class="notifications-header">
+    <div>
+      <h1>Notifications</h1>
+      <p>Review recent updates from rooms, friends, and account activity.</p>
+    </div>
+    <button class="mark-all" (click)="markAllAsRead()" *ngIf="notifications.length">
+      Mark all as read
+    </button>
+  </div>
+
+  <p *ngIf="loading">Loading...</p>
+  <p *ngIf="!loading && notifications.length === 0">
+    You don't have any notifications yet.
+  </p>
+
+  <div
+    class="notification-item"
+    *ngFor="let n of notifications"
+    [class.unread]="!n.isRead"
+    (click)="markAsRead(n)"
+  >
+    <img *ngIf="n.sender?.image?.url" [src]="n.sender?.image?.url" alt="" />
+    <div class="avatar-fallback" *ngIf="!n.sender?.image?.url">
+      {{ n.sender?.name ? n.sender!.name[0].toUpperCase() : '•' }}
+    </div>
+    <div class="notification-content">
+      <p>{{ n.message }}</p>
+      <span class="time">{{ n.createdAt | date: 'medium' }}</span>
+    </div>
+    <span class="dot" *ngIf="!n.isRead"></span>
+  </div>
+</div>
+
+<app-footer></app-footer>

@@ -10,15 +10,15 @@ const getNotifications = catchAsync(async (req, res) => {
   };
 
   const features = new APIFeatures(
-    Notification.find({
-      recipient: req.user._id,
-    })
-      .populate('sender', 'name email image')
-      .populate('recipient', 'name email image'),
-    featuresQuery,
-  )
-    .search()
-    .filter();
+  Notification.find({
+    recipient: req.user._id,
+  })
+    .populate('sender', 'name email image')
+    .populate('recipient', 'name email image'),
+  featuresQuery,
+)
+  .search()
+  .filter(['type', 'isRead']);
 
   const countQuery = features.mongooseQuery.clone();
   const total = await countQuery.countDocuments();

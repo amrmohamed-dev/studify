@@ -63,27 +63,15 @@ export class RegisterPageComponent {
       )
       .subscribe({
         next: () => {
-          this.authService
-            .sendOtp('Email Confirmation')
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-              next: () => {
-                this.router.navigate(['/otp'], {
-                  queryParams: {
-                    purpose: 'email-confirmation',
-                    email: formValue.email,
-                  },
-                });
-              },
-              error: () => {
-                this.router.navigate(['/otp'], {
-                  queryParams: {
-                    purpose: 'email-confirmation',
-                    email: formValue.email,
-                  },
-                });
-              },
-            });
+          // /auth/register already triggers the confirmation OTP email on
+          // the backend, so we just go straight to the OTP page. The
+          // "Resend" option there covers the case where that send failed.
+          this.router.navigate(['/otp'], {
+            queryParams: {
+              purpose: 'email-confirmation',
+              email: formValue.email,
+            },
+          });
         },
         error: (err) => {
           this.error = this.authService.getErrorMessage(err);

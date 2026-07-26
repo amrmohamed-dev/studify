@@ -1,14 +1,5 @@
 import fs from 'fs/promises';
 import path from 'path';
-import nodemailer from 'nodemailer';
-
-const transporter = nodemailer.createTransport({
-  service: 'Gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
 
 const emailTemplatePath = path.join(
   process.cwd(),
@@ -43,14 +34,27 @@ const sendEmail = async (options) => {
     year: new Date().getFullYear(),
   });
 
-  const mailOptions = {
-    from: `Studify <${process.env.EMAIL_USER}>`,
-    to: email,
-    subject,
-    html,
-  };
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'api-key': process.env.BREVO_API_KEY,
+    },
+    body: JSON.stringify({
+      sender: { name: 'Studify', email: process.env.EMAIL_USER },
+      to: [{ email }],
+      subject,
+      htmlContent: html,
+    }),
+  });
 
-  return await transporter.sendMail(mailOptions);
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`Brevo API error (${response.status}): ${errorBody}`);
+  }
+
+  return await response.json();
 };
 
 export default sendEmail;

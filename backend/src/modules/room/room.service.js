@@ -37,8 +37,9 @@ const getRoomById = async (id) => {
 };
 
 const getAllRooms = async (query) => {
-  const features = new APIFeatures(Room.find(), query).search().filter();
-
+ const features = new APIFeatures(Room.find(), query)
+  .search()
+  .filter(['privacyType', 'createdBy']);
   const countQuery = features.mongooseQuery.clone();
 
   const total = await Room.countDocuments(countQuery.getFilter());
@@ -74,10 +75,10 @@ const updateRoom = async ({ room, data, file }) => {
   if (data.password) room.password = data.password;
   if (
     data.maxMembers &&
-    typeof +data.maxMembers === 'number' &&
-    room.members.length <= data.maxMembers
+    !Number.isNaN(+data.maxMembers) &&
+    room.members.length <= +data.maxMembers
   )
-    room.maxMembers = data.maxMembers;
+    room.maxMembers = +data.maxMembers;
 
   if (file) {
     const upload = await cloudinaryService.uploadToCloudinary(

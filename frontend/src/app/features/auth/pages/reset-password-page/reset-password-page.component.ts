@@ -1,9 +1,15 @@
 import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Location } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
+
+interface ResetPasswordNavState {
+  email?: string;
+  resetToken?: string;
+}
 
 @Component({
   selector: 'app-reset-password-page',
@@ -14,7 +20,7 @@ import { finalize } from 'rxjs';
 export class ResetPasswordPageComponent implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
-  private route = inject(ActivatedRoute);
+  private location = inject(Location);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
 
@@ -23,15 +29,11 @@ export class ResetPasswordPageComponent implements OnInit {
   error = '';
   success = '';
 
-  // ✅ step control
   step: 'email' | 'reset' = 'email';
 
   resetForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
-    otp: [
-      '',
-      [Validators.required, Validators.minLength(6), Validators.maxLength(6)],
-    ],
+    resetToken: ['', [Validators.required]],
     password: [
       '',
       [Validators.required, Validators.minLength(8), Validators.maxLength(30)],
@@ -40,17 +42,21 @@ export class ResetPasswordPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    const email = this.route.snapshot.queryParamMap.get('email');
-    const otp = this.route.snapshot.queryParamMap.get('otp');
+    // Read email/resetToken from router state (set by the OTP page) instead
+    // of the URL, so the one-time token never appears in the address bar
+    // or browser history.
+    const state = (this.location.getState() as ResetPasswordNavState) || {};
 
-    // ✅ لو جاي من OTP page
-    if (email && otp) {
+    if (state.email && state.resetToken) {
       this.step = 'reset';
-      this.resetForm.patchValue({ email, otp });
+      this.resetForm.patchValue({
+        email: state.email,
+        resetToken: state.resetToken,
+      });
     }
   }
 
-  // 📩 Step 1: send OTP
+  // Step 1: send OTP
   sendOtp() {
     const email = this.resetForm.get('email')?.value;
 
@@ -84,7 +90,7 @@ export class ResetPasswordPageComponent implements OnInit {
       });
   }
 
-  // 🔐 Step 2: reset password
+  // Step 2: reset password
   submit() {
     if (this.step !== 'reset') return;
 
@@ -93,7 +99,7 @@ export class ResetPasswordPageComponent implements OnInit {
       return;
     }
 
-    const { password, passwordConfirm, email, otp } =
+    const { password, passwordConfirm, email, resetToken } =
       this.resetForm.getRawValue();
 
     if (password !== passwordConfirm) {
@@ -106,16 +112,14 @@ export class ResetPasswordPageComponent implements OnInit {
     this.success = '';
 
     this.authService
-      .resetPassword({ email, otp, password, passwordConfirm })
+      .resetPassword({ email, resetToken, password, passwordConfirm })
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => (this.loading = false)),
       )
       .subscribe({
-        next: (res: any) => {
-          // 🔥 مهم جدًا (بما إن الباك بيرجع JWT)
-          this.authService['userSubject'].next(res.data.user);
-
+        next: () => {
+          // resetPassword() already syncs AuthService's user state itself.
           this.router.navigate(['/home']);
         },
         error: (err) => {

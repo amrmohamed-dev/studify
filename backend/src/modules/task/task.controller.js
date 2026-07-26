@@ -26,13 +26,12 @@ export const getRoomTasks = catchAsync(async (req, res, next) => {
     .populate('createdBy', 'name')
     .populate('doneBy.user', 'name');
 
-  const features = new APIFeatures(query, req.query)
-    .search()
-    .filter()
-    .sort()
-    .select()
-    .paginate();
-
+ const features = new APIFeatures(query, req.query)
+  .search()
+  .filter(['createdBy'])
+  .sort()
+  .select()
+  .paginate();
   const tasks = await features.mongooseQuery;
 
   const tasksWithDoneCount = tasks.map(task => ({
@@ -106,9 +105,5 @@ export const deleteTask = catchAsync(async (req, res, next) => {
 
   if (!task) return next(new AppError('Task not found', 404));
 
-  res.status(204).json({
-    status: 'success',
-    message: 'Task deleted successfully',
-    data: null,
-  });
+  res.status(204).send();
 });

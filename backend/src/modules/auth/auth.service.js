@@ -17,8 +17,8 @@ const createSendToken = (user, statusCode, res, message) => {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000,
     ),
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+    secure: process.env.NODE_ENV !== 'development',
+    sameSite: process.env.NODE_ENV !== 'development' ? 'None' : 'Lax',
     httpOnly: true,
   };
 
@@ -50,6 +50,13 @@ const sendOtpEmail = async (user, purpose) => {
 };
 
 const verifyOtp = async (email, otp, purpose) => {
+  if (!email || !otp || !purpose) {
+    throw new AppError(
+      'Verification failed. Please check your OTP or request a new one',
+      400,
+    );
+  }
+
   const otpHashed = crypto.createHash('sha256').update(otp).digest('hex');
   const user = await UserModel.findOne({
     email,
@@ -66,4 +73,14 @@ const verifyOtp = async (email, otp, purpose) => {
   return user;
 };
 
-export { createSendToken, sendOtpEmail, verifyOtp };
+// Verifies the OTP, then immediately replaces it with a fresh, short-lived
+// reset token, consuming the original OTP and giving the client a safe
+// value to carry to the "set new password" step instead of the raw OTP.
+const issueResetToken = async (email, otp) => {
+  const user = await verifyOtp(email, otp, 'Password Recovery');
+  const resetToken = user.generateResetToken();
+  await user.save({ validateBeforeSave: false });
+  return { user, resetToken };
+};
+
+export { createSendToken, sendOtpEmail, verifyOtp, issueResetToken };

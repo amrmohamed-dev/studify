@@ -1,6 +1,7 @@
 import express from "express";
 import * as taskController from "./task.controller.js";
 import * as authMiddleware from "../../middlewares/auth.middleware.js";
+import { ensureRoomMember, ensureTaskRoomMember } from "../../middlewares/roomAccess.middleware.js";
 import validation from "../../middlewares/validation.middleware.js";
 import { taskValidation } from "./task.validation.js";
 
@@ -12,24 +13,24 @@ taskRouter.use(authMiddleware.isAuthenticated,authMiddleware.needVerify);
 taskRouter
   .route("/rooms/:roomId/tasks")
   .post(
+    ensureRoomMember,
     validation(taskValidation),
     taskController.createTask
   )
-  .get(taskController.getRoomTasks);
+  .get(ensureRoomMember, taskController.getRoomTasks);
 
 taskRouter
   .route("/tasks/:id")
-  .get(taskController.getTaskById)
+  .get(ensureTaskRoomMember, taskController.getTaskById)
   .patch(
+    ensureTaskRoomMember,
     validation(taskValidation),
     taskController.updateTask
   )
-  .delete(taskController.deleteTask);
+  .delete(ensureTaskRoomMember, taskController.deleteTask);
 
-taskRouter.patch("/tasks/:id/toggle", taskController.toggleTask);
+taskRouter.patch("/tasks/:id/toggle", ensureTaskRoomMember, taskController.toggleTask);
 
-taskRouter.get("/test", (req, res) => {
-  res.json({ message: "working" });
-});
+
 
 export default taskRouter;

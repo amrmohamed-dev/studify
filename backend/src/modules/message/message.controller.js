@@ -12,11 +12,11 @@ export const getMessagesByRoomId = catchAsync(async (req, res, next) => {
     .populate('room', 'name');
 
   const features = new APIFeatures(query, req.query)
-    .search()
-    .filter()
-    .sort()
-    .select()
-    .paginate();
+  .search()
+  .filter([])
+  .sort()
+  .select()
+  .paginate();
 
   const messages = await features.mongooseQuery;
 

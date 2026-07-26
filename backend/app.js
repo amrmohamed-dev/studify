@@ -2,6 +2,7 @@ import path from 'path';
 import { existsSync } from 'fs';
 import express from 'express';
 import morgan from 'morgan';
+import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import AppError from './src/utils/error/appError.js';
 import globalErrorHandler from './src/middlewares/globalErrorHandler.js';
@@ -12,10 +13,19 @@ import messageRouter from './src/modules/message/message.route.js';
 import notificationRouter from './src/modules/notification/notification.route.js';
 import friendshipRouter from './src/modules/friendship/friendship.route.js';
 import roomRouter from './src/modules/room/room.route.js';
-
+import helmet from 'helmet';
 const app = express();
-
+app.use(helmet());
 app.enable('trust proxy');
+
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((origin) => origin.trim())
+  : ['http://localhost:4200'];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+}));
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));

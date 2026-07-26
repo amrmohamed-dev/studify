@@ -9,6 +9,36 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   border-bottom: 1px solid #f1f5f9;
 
+  .notif-wrapper {
+    position: relative;
+
+    .icon-btn {
+      position: relative;
+    }
+
+    .notif-badge {
+      position: absolute;
+      top: -4px;
+      right: -6px;
+      background: #ef4444;
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 3px;
+    }
+
+    .notif-item.unread {
+      font-weight: 600;
+      background: #f5f5ff;
+    }
+  }
+
   .nav-left {
     display: flex;
     align-items: center;
